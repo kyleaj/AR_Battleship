@@ -21,7 +21,9 @@ import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
 import com.google.ar.sceneform.AnchorNode;
+import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.rendering.Renderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
 
@@ -55,15 +57,13 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
 
-                    // Create the Anchor.
-                    Anchor anchor = hitResult.createAnchor();
+                    // Create the Anchor, make it attached to a plane
+                    Anchor anchor = plane.createAnchor(hitResult.getHitPose());
                     AnchorNode anchorNode = new AnchorNode(anchor);
                     anchorNode.setParent(arFragment.getArSceneView().getScene());
 
-                    // Create the transformable andy and add it to the anchor.
-                    BoatNode andy = new BoatNode(1.0f, anchorNode);
-                    andy.setParent(anchorNode);
-                    andy.setRenderable(boat);
+                    // Debug FloatingNode
+                    // createFloatingNodeTestScene(anchorNode, boat);
                 });
     }
     public static boolean checkIsSupportedDeviceOrFinish(final Activity activity) {
@@ -85,5 +85,49 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
         return true;
+    }
+
+    private static void createFloatingNodeTestScene(AnchorNode node, Renderable renderable) {
+        // Create
+        Vector3 upPos = new Vector3(0.5f, 1, 0);
+        Vector3 downPos = new Vector3(-0.5f, -1, 0);
+        Vector3 neutralPos = new Vector3(0, 0, 0);
+        Vector3 regularPos = new Vector3(1f, 0, 0);
+        Vector3 pathPos = new Vector3(-1f, 0, 0);
+
+        Vector3[] path = new Vector3[]{new Vector3(0, 0, 0),
+                new Vector3(0, 1, 0.5f),
+                new Vector3(0, 0, 1),
+//                new Vector3(0, 1, 1.5f),
+//                new Vector3(0, 0, 2f),
+//                new Vector3(0, 1, 2.5f),
+//                new Vector3(0, 0, 3f)
+        };
+
+        FloatingNode up = new FloatingNode(node, FloatingNode.FloatState.Floating, upPos);
+        up.setRenderable(renderable);
+        FloatingNode down = new FloatingNode(node, FloatingNode.FloatState.Floating, downPos);
+        down.setRenderable(renderable);
+        FloatingNode neutral = new FloatingNode(node, FloatingNode.FloatState.Floating, neutralPos);
+        neutral.setRenderable(renderable);
+        FloatingNode pathNode = new FloatingNode(node, path, pathPos);
+        pathNode.setRenderable(renderable);
+
+        FloatingNode regular = new FloatingNode(node, regularPos);
+        regular.setRenderable(renderable);
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                regular.setState(FloatingNode.FloatState.Floating);
+            }
+        }, 5000);
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                up.setState(FloatingNode.FloatState.Gone);
+            }
+        }, 7000);
     }
 }
