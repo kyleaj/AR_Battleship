@@ -1,15 +1,11 @@
-package com.example.battleshipdemo;
+package com.cos426.ar_battleship;
 
-import android.os.Debug;
 import android.util.Log;
 
 import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Renderable;
-
-import java.io.Console;
-import java.util.Vector;
 
 
 // TODO: Make visibility do something

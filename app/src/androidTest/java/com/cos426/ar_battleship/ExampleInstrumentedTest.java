@@ -1,4 +1,4 @@
-package com.example.battleshipdemo;
+package com.cos426.ar_battleship;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.example.battleshipdemo", appContext.getPackageName());
+        assertEquals("com.cos426.ar_battleship", appContext.getPackageName());
     }
 }

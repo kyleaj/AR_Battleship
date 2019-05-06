@@ -1,14 +1,10 @@
-package com.example.battleshipdemo;
+package com.cos426.ar_battleship;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,7 +13,6 @@ import android.view.MotionEvent;
 import android.widget.Toast;
 
 import com.google.ar.core.Anchor;
-import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
 import com.google.ar.sceneform.AnchorNode;
@@ -25,9 +20,8 @@ import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.Renderable;
 import com.google.ar.sceneform.ux.ArFragment;
-import com.google.ar.sceneform.ux.TransformableNode;
 
-public class MainActivity extends AppCompatActivity {
+public class ARActivity extends AppCompatActivity {
 
     ArFragment arFragment;
     ModelRenderable boat;
@@ -36,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.ar_activity);
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
 
         ModelRenderable.builder()

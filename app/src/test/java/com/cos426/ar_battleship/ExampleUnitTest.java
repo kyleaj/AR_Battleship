@@ -1,4 +1,4 @@
-package com.example.battleshipdemo;
+package com.cos426.ar_battleship;
 
 import org.junit.Test;
 
