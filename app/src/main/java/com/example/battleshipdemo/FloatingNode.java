@@ -6,6 +6,7 @@ import android.util.Log;
 import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.math.Vector3;
+import com.google.ar.sceneform.rendering.Renderable;
 
 import java.io.Console;
 import java.util.Vector;
@@ -49,10 +50,12 @@ public class FloatingNode extends Node {
     private float speed = 1f;
     // Creation time
     private long creationTime;
+    // Saves the renderable
+    private Renderable model;
 
 
     /**
-     * Creates a node with the default starting values: submerged at -0.5 meters invisible,
+     * Creates a node with the default starting values: submerged at -0.5 meters,
      * animating, and Velocity of zero.
      * For best results, consider making the parent an Anchornode and set the Anchor node to
      * be attatched to the water plane.
@@ -63,7 +66,7 @@ public class FloatingNode extends Node {
         creationTime = System.currentTimeMillis();
         this.setLocalScale(new Vector3(0.2f, 0.2f, 0.2f));
         origin = Vector3.add(new Vector3(), pos); // Prevent any accidental edits
-        visibility = false;
+        visibility = true;
         state = FloatState.Submerged;
         this.parent = parent;
         this.animating = true;
@@ -115,8 +118,17 @@ public class FloatingNode extends Node {
         wave = new Vector3();
     }
 
+    // TODO: This don't work.
     public void setVisibility(boolean visibility) {
-        this.visibility = visibility;
+        if (visibility != this.visibility) {
+            this.visibility = visibility;
+            if (visibility) {
+                this.setRenderable(model);
+            } else {
+                model = this.getRenderable(); // Save current renderable.
+                this.setRenderable(null);
+            }
+        }
     }
 
     public void setState(FloatState state) {

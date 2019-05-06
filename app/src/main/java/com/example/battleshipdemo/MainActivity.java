@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
                     anchorNode.setParent(arFragment.getArSceneView().getScene());
 
                     // Debug FloatingNode
-                    // createFloatingNodeTestScene(anchorNode, boat);
+                    //createFloatingNodeTestScene(anchorNode, boat);
                 });
     }
     public static boolean checkIsSupportedDeviceOrFinish(final Activity activity) {
@@ -110,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
         down.setRenderable(renderable);
         FloatingNode neutral = new FloatingNode(node, FloatingNode.FloatState.Floating, neutralPos);
         neutral.setRenderable(renderable);
+        neutral.setVisibility(false);
         FloatingNode pathNode = new FloatingNode(node, path, pathPos);
         pathNode.setRenderable(renderable);
 
@@ -119,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
+                regular.setVisibility(true);
                 regular.setState(FloatingNode.FloatState.Floating);
             }
         }, 5000);
