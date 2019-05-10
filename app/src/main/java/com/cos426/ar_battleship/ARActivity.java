@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
+import com.google.ar.core.Pose;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Material;
@@ -65,11 +66,12 @@ public class ARActivity extends AppCompatActivity {
                     Material fakeMat = boat.getMaterial().makeCopy();
                     redSphereRenderable.setMaterial(fakeMat);
                     // Create the Anchor, make it attached to a plane
-                    Anchor anchor = plane.createAnchor(hitResult.getHitPose());
-                    AnchorNode anchorNode = new AnchorNode(anchor);
-                    anchorNode.setParent(arFragment.getArSceneView().getScene());
+//                    Anchor anchor = plane.createAnchor(hitResult.getHitPose());
+//                    AnchorNode anchorNode = new AnchorNode(anchor);
+//                    anchorNode.setParent(arFragment.getArSceneView().getScene());
                     // Debug FloatingNode
-                    createFloatingNodeTestScene(anchorNode, redSphereRenderable);
+                    //createFloatingNodeTestScene(anchorNode, redSphereRenderable);
+                    testRenderableDef(hitResult.getHitPose(), plane, hitResult);
                 });
     }
     public static boolean checkIsSupportedDeviceOrFinish(final Activity activity) {
@@ -91,6 +93,30 @@ public class ARActivity extends AppCompatActivity {
             return false;
         }
         return true;
+    }
+
+    int touchCount = 0;
+    AnchorNode saved;
+    Vector3[] positions;
+    private void testRenderableDef(Pose pose, Plane plane, HitResult result) {
+//        if (touchCount == 0) {
+//            saved = new AnchorNode(plane.createAnchor(pose));
+//            saved.setParent(arFragment.getArSceneView().getScene());
+//            positions = new Vector3[4];
+//            Log.d("BattleshipDemo", "Created center anchor");
+//        } else if (touchCount < 5) {
+//            Vector3 position = new AnchorNode(plane.createAnchor(pose)).getWorldPosition();
+//            position = Vector3.subtract(position, saved.getWorldPosition());
+//            positions[touchCount - 1] = position;
+//            Log.d("BattleshipDemo", "Added position");
+//        } else if(touchCount == 5) {
+//            Log.d("BattleshipDemo", "About to make game board");
+//            GameBoardModel model = new GameBoardModel(positions[0], positions[1], positions[2], positions[3], saved, getApplicationContext(), redSphereRenderable);
+//        }
+        saved = new AnchorNode(plane.createAnchor(pose));
+        saved.setParent(arFragment.getArSceneView().getScene());
+        GameBoardModel model = new GameBoardModel(new Vector3(0, 0, 0), Vector3.right(), Vector3.back(), Vector3.add(Vector3.right(), Vector3.back()), saved, getApplicationContext(), redSphereRenderable);
+        touchCount++;
     }
 
     private static void createFloatingNodeTestScene(AnchorNode node, Renderable renderable) {
