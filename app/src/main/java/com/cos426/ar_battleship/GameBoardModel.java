@@ -41,13 +41,13 @@ public class GameBoardModel {
         Color blue = new Color(0, 0, 1);
 
         ArrayList<Vertex> vertices = new ArrayList<>(4);
-        vertices.add(Vertex.builder().setPosition(topLeft).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(0, 0)).build());
-        vertices.add(Vertex.builder().setPosition(topRight).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(0, 1)).build());
-        vertices.add(Vertex.builder().setPosition(bottomLeft).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(1, 0)).build());
-        vertices.add(Vertex.builder().setPosition(bottomRight).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(1, 1)).build());
+        vertices.add(Vertex.builder().setPosition(topLeft).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(1, 1)).build());
+        vertices.add(Vertex.builder().setPosition(topRight).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(1, 0)).build());
+        vertices.add(Vertex.builder().setPosition(bottomLeft).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(0, 1)).build());
+        vertices.add(Vertex.builder().setPosition(bottomRight).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(0, 0)).build());
         Log.d("BattleshipDemo", "Built vertices");
 
-        ArrayList<Integer> triangleIndices = new ArrayList<>(Arrays.asList(0, 1, 2, 2, 1, 3));
+        ArrayList<Integer> triangleIndices = new ArrayList<>(Arrays.asList(0, 2, 1, 2, 3, 1));
 
         Log.d("BattleshipDemo", "Creating material RenderableDefinition");
 
@@ -74,6 +74,7 @@ public class GameBoardModel {
                     .setVertices(vertices)
                     .setSubmeshes(new ArrayList<RenderableDefinition.Submesh>(Arrays.asList(submesh)))
                     .build();
+            // TODO: VBO Order?
             ModelRenderable.builder()
                     .setSource(def)
                     .build().handle(((modelRenderable, throwable1) -> {
