@@ -51,3 +51,8 @@ sceneform.asset('sampledata/CUPIC_OCEAN.obj',
         'default',
         'sampledata/CUPIC_OCEAN.sfa',
         'src/main/assets/CUPIC_OCEAN')
+
+sceneform.asset('sampledata/bomb.gltf',
+        'default',
+        'sampledata/bomb.sfa',
+        'src/main/assets/bomb')

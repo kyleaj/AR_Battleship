@@ -25,7 +25,7 @@ public class GameBoardModel {
     private static final int DEPTH = 2; // How low should the hole go?
 
     // Create a game board "hole" model/hole in floor. Takes four points to draw the board with and the anchor holding them
-    public GameBoardModel(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, AnchorNode anchorNode, Context context, ModelRenderable second) {
+    public GameBoardModel(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, AnchorNode anchorNode, Context context) {
 //        Vector3 downDirection = anchorNode.getDown().normalized();
         // Let's draw a plane first
         Vector3 upDirection = anchorNode.getDown();

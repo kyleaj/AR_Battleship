@@ -3,6 +3,7 @@ package com.cos426.ar_battleship;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -11,6 +12,8 @@ import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.ar.core.Anchor;
@@ -18,22 +21,34 @@ import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
 import com.google.ar.core.Pose;
 import com.google.ar.sceneform.AnchorNode;
+import com.google.ar.sceneform.HitTestResult;
+import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Material;
 import com.google.ar.sceneform.rendering.MaterialFactory;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.Renderable;
+import com.google.ar.sceneform.rendering.RenderableDefinition;
 import com.google.ar.sceneform.rendering.ShapeFactory;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.rendering.Color;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 
 public class ARActivity extends AppCompatActivity {
 
-    ArFragment arFragment;
-    ModelRenderable boat;
-    ModelRenderable redSphereRenderable;
+    private ArFragment arFragment;
     private static final double MIN_OPENGL_VERSION = 3.0;
+
+    private ModelRenderable bomb;
+
+    private ImageView reticle;
+    private TextView instructions;
+
+    public GameInfo gameInfo;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,39 +56,60 @@ public class ARActivity extends AppCompatActivity {
         setContentView(R.layout.ar_activity);
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
 
-        ModelRenderable.builder()
-                .setSource(this.getApplicationContext(), R.raw.old_boat)
-                .build()
-                .thenAccept(renderable -> boat = renderable)
-                .exceptionally(
-                        throwable -> {
-                            Toast toast =
-                                    Toast.makeText(this, "Unable to load andy renderable", Toast.LENGTH_LONG);
-                            toast.setGravity(Gravity.CENTER, 0, 0);
-                            toast.show();
-                            return null;
-                        });
-        MaterialFactory.makeOpaqueWithColor(this, new Color(android.graphics.Color.RED))
-                .thenAccept(
-                        material -> {
-                            redSphereRenderable =
-                                    ShapeFactory.makeCube(new Vector3(10.0f, 0.0f, 10.0f), new Vector3(0.0f, 0.15f, 0.0f), material); });
-        arFragment.setOnTapArPlaneListener(
-                (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
-                    if (boat == null) {
-                        return;
-                    }
-                    Material fakeMat = boat.getMaterial().makeCopy();
-                    redSphereRenderable.setMaterial(fakeMat);
-                    // Create the Anchor, make it attached to a plane
-//                    Anchor anchor = plane.createAnchor(hitResult.getHitPose());
-//                    AnchorNode anchorNode = new AnchorNode(anchor);
-//                    anchorNode.setParent(arFragment.getArSceneView().getScene());
-                    // Debug FloatingNode
-                    //createFloatingNodeTestScene(anchorNode, redSphereRenderable);
-                    testRenderableDef(hitResult.getHitPose(), plane, hitResult);
-                });
+        reticle = findViewById(R.id.reticle);
+        instructions = findViewById(R.id.instructions);
+
+
+        Intent intent = getIntent();
+        gameInfo = (GameInfo)intent.getSerializableExtra(getString(R.string.pass_game));
+        gameInfo.currState = GameInfo.State.SetPlayArea;
+
+        CompletableFuture<ModelRenderable> bombBuilder = ModelRenderable.builder().setSource(this, R.raw.bomb).build();
+
+        CompletableFuture.allOf(bombBuilder).handle((result, throwable) -> {
+            if(throwable != null) {
+                Log.wtf("BattleshipDemo", "Can't load renderables!");
+                return null;
+            }
+
+            try {
+                bomb = bombBuilder.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+
+            // Now set everything up
+            instructions.setText("Move the device so the reticle points towards the center of the play area, then tap anywhere on the screen.");
+            arFragment.setOnTapArPlaneListener(this::setPlayArea);
+            return null;
+        });
     }
+
+    public void setPlayArea(HitResult hitResult, Plane plane, MotionEvent motionEvent) {
+        if (gameInfo != null && gameInfo.currState == GameInfo.State.SetPlayArea) {
+            Anchor anchor = plane.createAnchor(hitResult.getHitPose());
+            AnchorNode node = new AnchorNode(anchor);
+            node.setParent(arFragment.getArSceneView().getScene());
+            gameInfo.currState = GameInfo.State.AdjustingBoard;
+
+        }
+    }
+
+    private void setupPlayArea() {
+
+    }
+
+    private void handleArTap() {
+
+    }
+
+    private void debugState() {
+
+    }
+
+
     public static boolean checkIsSupportedDeviceOrFinish(final Activity activity) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             Log.e("BattleDemo", "Sceneform requires Android N or later");
@@ -111,7 +147,7 @@ public class ARActivity extends AppCompatActivity {
             Log.d("BattleshipDemo", "Added position");
         } else if(touchCount == 5) {
             Log.d("BattleshipDemo", "About to make game board");
-            GameBoardModel model = new GameBoardModel(positions[0], positions[1], positions[2], positions[3], saved, getApplicationContext(), redSphereRenderable);
+            GameBoardModel model = new GameBoardModel(positions[0], positions[1], positions[2], positions[3], saved, getApplicationContext());
         }
         touchCount++;
     }

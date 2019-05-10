@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 public class GameInfo implements Serializable {
 
+    public enum State{SetPlayArea, AdjustingBoard, Player1Choosing, Player2Choosing, Debug};
+
     public static final int PIN_LENGTH = 5;
 
     public String Gamepin;
@@ -11,6 +13,7 @@ public class GameInfo implements Serializable {
     public boolean amIPlayer1;
     public int player1Score;
     public int player2Score;
+    public State currState;
 
     public boolean readyToStart; // Set to true once second player joined in 2 player game
 
@@ -20,6 +23,7 @@ public class GameInfo implements Serializable {
         player1Score = 0;
         player2Score = 0;
         readyToStart = false;
+        currState = State.SetPlayArea;
     }
 
     // Required by Firebase Realtime Database. Not otherwise to be used(!)
