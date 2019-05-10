@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
     public void onClickStartGame(View view) {
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setTitle("Select Number of Players: ")
-                .setItems(new String[]{"1-Player", "2-Players"}, (dialog1, which) -> {
+                .setItems(new String[]{"1 Player", "2 Players"}, (dialog1, which) -> {
                     switch (which) {
                         case 0: // One player
                             Intent intent = new Intent(this, ARActivity.class);
