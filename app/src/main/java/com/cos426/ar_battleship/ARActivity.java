@@ -95,6 +95,27 @@ public class ARActivity extends AppCompatActivity {
         return true;
     }
 
+    int touchCount = 0;
+    AnchorNode saved;
+    Vector3[] positions;
+    private void testRenderableDef(Pose pose, Plane plane, HitResult result) {
+        if (touchCount == 0) {
+            saved = new AnchorNode(plane.createAnchor(pose));
+            saved.setParent(arFragment.getArSceneView().getScene());
+            positions = new Vector3[4];
+            Log.d("BattleshipDemo", "Created center anchor");
+        } else if (touchCount < 5) {
+            Vector3 position = new AnchorNode(plane.createAnchor(pose)).getWorldPosition();
+            position = Vector3.subtract(position, saved.getWorldPosition());
+            positions[touchCount - 1] = position;
+            Log.d("BattleshipDemo", "Added position");
+        } else if(touchCount == 5) {
+            Log.d("BattleshipDemo", "About to make game board");
+            GameBoardModel model = new GameBoardModel(positions[0], positions[1], positions[2], positions[3], saved, getApplicationContext(), redSphereRenderable);
+        }
+        touchCount++;
+    }
+
     private static void createFloatingNodeTestScene(AnchorNode node, Renderable renderable) {
         // Create
         Vector3 upPos = new Vector3(0.5f, 1, 0);
@@ -106,6 +127,10 @@ public class ARActivity extends AppCompatActivity {
         Vector3[] path = new Vector3[]{new Vector3(0, 0, 0),
                 new Vector3(0, 1, 0.5f),
                 new Vector3(0, 0, 1),
+//                new Vector3(0, 1, 1.5f),
+//                new Vector3(0, 0, 2f),
+//                new Vector3(0, 1, 2.5f),
+//                new Vector3(0, 0, 3f)
         };
 
         FloatingNode up = new FloatingNode(node, FloatingNode.FloatState.Floating, upPos);
