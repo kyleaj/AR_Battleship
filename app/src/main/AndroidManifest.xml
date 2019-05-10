@@ -21,6 +21,7 @@
             </intent-filter>
         </activity>
         <activity android:name="com.cos426.ar_battleship.ARActivity"></activity>
+        <activity android:name="com.cos426.ar_battleship.PlacementActivity"></activity>
 
         <meta-data
             android:name="com.google.ar.core"
