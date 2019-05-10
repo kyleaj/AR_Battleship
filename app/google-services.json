@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "60070100134",
+    "firebase_url": "https://arbattleship.firebaseio.com",
+    "project_id": "arbattleship",
+    "storage_bucket": "arbattleship.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:60070100134:android:351d8a3cc4313977",
+        "android_client_info": {
+          "package_name": "com.cos426.ar_battleship"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "60070100134-v08sk437376elnil7d0oruer7pefq8ai.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJSw0KT-09KrpCiv_8ntqJVGI5NEzKUvY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "60070100134-v08sk437376elnil7d0oruer7pefq8ai.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
