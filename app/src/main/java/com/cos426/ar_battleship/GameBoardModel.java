@@ -6,6 +6,7 @@ import android.util.Log;
 import com.google.ar.core.Anchor;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.Node;
+import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Color;
 import com.google.ar.sceneform.rendering.Material;
@@ -17,6 +18,7 @@ import com.google.ar.sceneform.rendering.Vertex;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -26,28 +28,42 @@ public class GameBoardModel {
 
     // Create a game board "hole" model/hole in floor. Takes four points to draw the board with and the anchor holding them
     public GameBoardModel(Vector3 topLeft, Vector3 topRight, Vector3 bottomLeft, Vector3 bottomRight, AnchorNode anchorNode, Context context) {
-//        Vector3 downDirection = anchorNode.getDown().normalized();
+        Vector3 downDirection = anchorNode.getDown().normalized();
         // Let's draw a plane first
         Vector3 upDirection = anchorNode.getDown();
 
-//        Vector3 downTopLeft = Vector3.subtract(topLeft, downDirection.scaled(DEPTH));
-//        Vector3 downTopRight = Vector3.subtract(topLeft, downDirection.scaled(DEPTH));
-//        Vector3 downBottomLeft = Vector3.subtract(topLeft, downDirection.scaled(DEPTH));
-//        Vector3 downBottomRight = Vector3.subtract(topLeft, downDirection.scaled(DEPTH));
+        Vector3 downTopLeft = Vector3.add(topLeft, downDirection.scaled(DEPTH));
+        Vector3 downTopRight = Vector3.add(topRight, downDirection.scaled(DEPTH));
+        Vector3 downBottomLeft = Vector3.add(bottomLeft, downDirection.scaled(DEPTH));
+        Vector3 downBottomRight = Vector3.add(bottomRight, downDirection.scaled(DEPTH));
+
+        Vector3 topLeftNormal = Vector3.subtract(bottomRight, topLeft).normalized();
+        Vector3 topRightNormal = Vector3.subtract(bottomLeft, topRight).normalized();
+        Vector3 bottomLeftNormal = Vector3.subtract(new Vector3(0, 0, 0), topLeftNormal);
+        Vector3 bottomRightNormal = Vector3.subtract(new Vector3(0, 0, 0), topRightNormal);
+
+        Vector3 downTopLeftNormal = Vector3.add(topLeftNormal, Vector3.up()).normalized();
+        Vector3 downTopRightNormal = Vector3.add(topRightNormal, Vector3.up()).normalized();
+        Vector3 downBottomLeftNormal = Vector3.add(bottomLeftNormal, Vector3.up()).normalized();
+        Vector3 downBottomRightNormal = Vector3.add(bottomRightNormal, Vector3.up()).normalized();
 
         Color black = new Color(0, 0, 0);
         Color red = new Color(1, 0, 0);
         Color green = new Color(0, 1, 0);
         Color blue = new Color(0, 0, 1);
 
-        ArrayList<Vertex> vertices = new ArrayList<>(4);
-        vertices.add(Vertex.builder().setPosition(topLeft).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(1, 1)).build());
-        vertices.add(Vertex.builder().setPosition(topRight).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(1, 0)).build());
-        vertices.add(Vertex.builder().setPosition(bottomLeft).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(0, 1)).build());
-        vertices.add(Vertex.builder().setPosition(bottomRight).setNormal(upDirection).setUvCoordinate(new Vertex.UvCoordinate(0, 0)).build());
+        ArrayList<Vertex> vertices = new ArrayList<>(8);
+        vertices.add(Vertex.builder().setPosition(topLeft).setNormal(topLeftNormal).setUvCoordinate(new Vertex.UvCoordinate(1, 1)).build());
+        vertices.add(Vertex.builder().setPosition(topRight).setNormal(topRightNormal).setUvCoordinate(new Vertex.UvCoordinate(1, 0)).build());
+        vertices.add(Vertex.builder().setPosition(bottomLeft).setNormal(bottomLeftNormal).setUvCoordinate(new Vertex.UvCoordinate(0, 1)).build());
+        vertices.add(Vertex.builder().setPosition(bottomRight).setNormal(bottomRightNormal).setUvCoordinate(new Vertex.UvCoordinate(0, 0)).build());
+        vertices.add(Vertex.builder().setPosition(downTopLeft).setNormal(downTopLeftNormal).setUvCoordinate(new Vertex.UvCoordinate(1, 1)).build());
+        vertices.add(Vertex.builder().setPosition(downTopRight).setNormal(downTopRightNormal).setUvCoordinate(new Vertex.UvCoordinate(1, 0)).build());
+        vertices.add(Vertex.builder().setPosition(downBottomLeft).setNormal(downBottomLeftNormal).setUvCoordinate(new Vertex.UvCoordinate(0, 1)).build());
+        vertices.add(Vertex.builder().setPosition(downBottomRight).setNormal(downBottomRightNormal).setUvCoordinate(new Vertex.UvCoordinate(0, 0)).build());
         Log.d("BattleshipDemo", "Built vertices");
 
-        ArrayList<Integer> triangleIndices = new ArrayList<>(Arrays.asList(0, 2, 1, 2, 3, 1));
+        ArrayList<Integer> triangleIndices = new ArrayList<>(Arrays.asList(0, 4, 1, 1, 4, 5, 2, 3, 6, 3, 7, 6, 0, 2, 4, 4, 2, 6, 1, 5, 3, 3, 5, 7, 5, 4, 6, 5, 6, 7));
 
         Log.d("BattleshipDemo", "Creating material RenderableDefinition");
 
@@ -74,7 +90,7 @@ public class GameBoardModel {
                     .setVertices(vertices)
                     .setSubmeshes(new ArrayList<RenderableDefinition.Submesh>(Arrays.asList(submesh)))
                     .build();
-            // TODO: VBO Order?
+
             ModelRenderable.builder()
                     .setSource(def)
                     .build().handle(((modelRenderable, throwable1) -> {
@@ -90,9 +106,6 @@ public class GameBoardModel {
                         Node node = new Node();
                         node.setRenderable(modelRenderable);
                         node.setParent(anchorNode);
-//                        Node node2 = new Node();
-//                        node.setRenderable(second);
-//                        node.setParent(anchorNode);
                         return null;
                     }));
             return null;
