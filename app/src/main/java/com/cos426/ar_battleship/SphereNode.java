@@ -63,9 +63,9 @@ public class SphereNode extends Node {
     public boolean onSelected() {
         if (containsShip) {
             this.getRenderable().getMaterial().setFloat3(MaterialFactory.MATERIAL_COLOR, new Color(android.graphics.Color.RED));
+            this.addChild(new ExplosionNode(thisFragment));
         } else {
             this.getRenderable().getMaterial().setFloat3(MaterialFactory.MATERIAL_COLOR, new Color(android.graphics.Color.WHITE));
-            this.addChild(new ExplosionNode(thisFragment));
         }
         return containsShip;
     }

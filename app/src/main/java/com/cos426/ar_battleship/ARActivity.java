@@ -88,15 +88,6 @@ public class ARActivity extends AppCompatActivity {
         gameInfo.currState = GameInfo.State.SetPlayArea;
 
         CompletableFuture<ModelRenderable> frameBuilder = ModelRenderable.builder().setSource(this, R.raw.pic_frame).build();
-//        LinearLayout fire_it = new LinearLayout(this);
-//        Button fireButton = new Button(this);
-//        fireButton.setText("Fire?");
-//        fireButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                takeAShot();
-//            }
-//        });
 
         CompletableFuture<ViewRenderable> fireBuilder = ViewRenderable.builder().setView(this, R.layout.confirm_fire).build();
 
@@ -147,6 +138,7 @@ public class ARActivity extends AppCompatActivity {
             boardNode = new TransformableNode(arFragment.getTransformationSystem());
             boardNode.setRenderable(frame);
             boardNode.setParent(boardAnchor);
+            confirmFireNode.setParent(boardAnchor);
 
             // Change game state
             gameInfo.currState = GameInfo.State.AdjustingBoard;
@@ -199,7 +191,11 @@ public class ARActivity extends AppCompatActivity {
     }
 
     private void handleArTap(SphereNode.SphereNodeTouchedEvent tappedEvent, boolean containsShip) {
-        if (lastTouched!= null && lastTouched != tappedEvent.thisNode)
+        if (lastTouched == tappedEvent.thisNode) {
+            takeAShot();
+            return;
+        }
+        if (lastTouched!= null)
             lastTouched.notTouched();
         lastTouched = tappedEvent.thisNode;
         confirmFireNode.target = lastTouched;
@@ -236,7 +232,8 @@ public class ARActivity extends AppCompatActivity {
         }else{
             board = gameInfo.player1Board;
         }
-        return board.shoot(x,y);
+        return true;
+        //return board.shoot(x,y);
     }
     private boolean checkWinState(){
         if(gameInfo.amIPlayer1){
