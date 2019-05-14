@@ -63,10 +63,6 @@ sceneform.asset('sampledata/Bomb.gltf',
         'sampledata/Bomb.sfa',
         'src/main/assets/Bomb')
 
-sceneform.asset('sampledata/occlude_material.obj',
-        'sampledata/occlude.mat',
-        'sampledata/occlude_material.sfa',
-        'src/main/assets/occlude_material')
 
 sceneform.asset('sampledata/pic_frame.gltf',
         'default',

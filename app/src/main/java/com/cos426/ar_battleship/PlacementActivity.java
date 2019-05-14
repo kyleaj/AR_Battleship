@@ -18,9 +18,11 @@ import android.widget.GridView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-public class PlacementActivity extends Activity implements OnClickListener {
+public class PlacementActivity {// extends Activity implements OnClickListener {
+   /**
     private ArrayList<ToggleButton> mButtons = new ArrayList<>();
     /** Called when the activity is first created. */
+   /*
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,4 +124,5 @@ public class PlacementActivity extends Activity implements OnClickListener {
         Toast.makeText(getBaseContext(),  item.getTitle()+" of "+selectedButton.getText()+ " was pressed!", Toast.LENGTH_SHORT).show();
         return true;
     }
+    */
 }

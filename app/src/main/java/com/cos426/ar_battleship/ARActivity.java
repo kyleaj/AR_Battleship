@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
+import com.google.ar.sceneform.rendering.Color;
 import android.os.Build;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -39,6 +39,7 @@ import com.google.ar.sceneform.rendering.ShapeFactory;
 import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
+import com.google.ar.schemas.sceneform.MaterialDef;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -123,7 +124,37 @@ public class ARActivity extends AppCompatActivity {
     }
 
     private void setupPlayArea() {
+        float width = boardNode.getLocalScale().x;
+        float height = boardNode.getLocalScale().z;
 
+        // 7 x 7 board
+        float dw = width / (2 * 7);
+        float dy = height / (2 * 7);
+        float startX = -width/2;
+        float startY = -height/2;
+
+        Node[][] positions = new Node[7][7];
+
+        MaterialFactory.makeOpaqueWithColor(this, new Color(255, 255, 255)).handle(
+                ((material, throwable) -> {
+
+                    if (throwable != null) {
+                        Log.e("BattleshipDemo", "Couldn't make sphere material!");
+                    }
+
+                    for (int x = 0; x < 7; x++) {
+                        for (int y = 0; y < y; y++) {
+                            positions[x][y] = new Node();
+                            Renderable sphere = ShapeFactory.makeSphere(width * 0.7f / 7f, new Vector3(0, 0, 0), material.makeCopy());
+                            positions[x][y].setRenderable(sphere);
+                            positions[x][y].setLocalPosition(new Vector3((dw * x) + startX, 0,(dy *y) + startY));
+                            positions[x][y].setParent(boardNode);
+                        }
+                    }
+
+                    return null;
+                })
+        );
     }
 
     private void handleArTap() {
@@ -141,7 +172,7 @@ public class ARActivity extends AppCompatActivity {
                 Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL);
         layout.setLayoutParams(layoutparams);
         TextView label = new TextView(this);
-        layout.setBackgroundColor(Color.WHITE);
+        layout.setBackgroundColor(android.graphics.Color.WHITE);
         FrameLayout.LayoutParams params=new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL);
         layout.setLayoutParams(params);
@@ -203,10 +234,6 @@ public class ARActivity extends AppCompatActivity {
         Vector3[] path = new Vector3[]{new Vector3(0, 0, 0),
                 new Vector3(0, 1, 0.5f),
                 new Vector3(0, 0, 1),
-//                new Vector3(0, 1, 1.5f),
-//                new Vector3(0, 0, 2f),
-//                new Vector3(0, 1, 2.5f),
-//                new Vector3(0, 0, 3f)
         };
 
         FloatingNode up = new FloatingNode(node, FloatingNode.FloatState.Floating, upPos);
