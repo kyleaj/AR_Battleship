@@ -50,22 +50,16 @@ public class ARActivity extends AppCompatActivity {
     private static final double MIN_OPENGL_VERSION = 3.0;
 
     // Gmae layout setup renderables
-    private ModelRenderable bomb;
-    private ViewRenderable bombULLabel;
-    private ViewRenderable bombURLabel;
-    private ViewRenderable bombBLLabel;
-    private ViewRenderable bombBRLabel;
+    private ModelRenderable frame;
 
     // Setting up the playboard views
     private ImageView reticle;
     private TextView instructions;
     private Button ar_button;
-    TransformableNode parentNode;
 
     // Game board variables
-    private Node[] points;
-    private AnchorNode[] extraAnchors;
     private AnchorNode boardAnchor;
+    private Node boardNode;
 
     public GameInfo gameInfo;
 
@@ -84,18 +78,10 @@ public class ARActivity extends AppCompatActivity {
         gameInfo = (GameInfo)intent.getSerializableExtra(getString(R.string.pass_game));
         gameInfo.currState = GameInfo.State.SetPlayArea;
 
-        CompletableFuture<ModelRenderable> bombBuilder = ModelRenderable.builder().setSource(this, R.raw.bomb).build();
-        CompletableFuture<ViewRenderable> labelULbuilder = ViewRenderable.builder().setView(this, makeLabel("Upper Left")).build();
-        CompletableFuture<ViewRenderable> labelURbuilder = ViewRenderable.builder().setView(this, makeLabel("Upper Right")).build();
-        CompletableFuture<ViewRenderable> labelBLbuilder = ViewRenderable.builder().setView(this, makeLabel("Bottom Left")).build();
-        CompletableFuture<ViewRenderable> labelBRbuilder = ViewRenderable.builder().setView(this, makeLabel("Bottom Right")).build();
+        CompletableFuture<ModelRenderable> frameBuilder = ModelRenderable.builder().setSource(this, R.raw.pic_frame).build();
 
         CompletableFuture.allOf(
-                bombBuilder,
-                labelULbuilder,
-                labelURbuilder,
-                labelBLbuilder,
-                labelBRbuilder
+                frameBuilder
         ).handle((result, throwable) -> {
             if(throwable != null) {
                 Log.wtf("BattleshipDemo", "Can't load renderables!");
@@ -103,11 +89,7 @@ public class ARActivity extends AppCompatActivity {
             }
 
             try {
-                bomb = bombBuilder.get();
-                bombULLabel = labelULbuilder.get();
-                bombURLabel = labelURbuilder.get();
-                bombBLLabel = labelBLbuilder.get();
-                bombBRLabel = labelBRbuilder.get();
+                frame = frameBuilder.get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException e) {
@@ -128,39 +110,7 @@ public class ARActivity extends AppCompatActivity {
             AnchorNode anchorNode = new AnchorNode(anchor);
             anchorNode.setParent(arFragment.getArSceneView().getScene());
 
-            // Have to make multiple anchors for the board for the transformable nodes :/
-            AnchorNode anchorNode1 = new AnchorNode(plane.createAnchor(hitResult.getHitPose()));
-            AnchorNode anchorNode2 = new AnchorNode(plane.createAnchor(hitResult.getHitPose()));
-            AnchorNode anchorNode3 = new AnchorNode(plane.createAnchor(hitResult.getHitPose()));
-            AnchorNode anchorNode4 = new AnchorNode(plane.createAnchor(hitResult.getHitPose()));
-            anchorNode1.setParent(arFragment.getArSceneView().getScene());
-            anchorNode2.setParent(arFragment.getArSceneView().getScene());
-            anchorNode3.setParent(arFragment.getArSceneView().getScene());
-            anchorNode4.setParent(arFragment.getArSceneView().getScene());
-
-            TransformableNode upperLeft = new TransformableNode(arFragment.getTransformationSystem());
-            upperLeft.setRenderable(bomb);
-            TransformableNode upperRight = new TransformableNode(arFragment.getTransformationSystem());
-            upperRight.setRenderable(bomb);
-            TransformableNode bottomLeft = new TransformableNode(arFragment.getTransformationSystem());
-            bottomLeft.setRenderable(bomb);
-            TransformableNode bottomRight = new TransformableNode(arFragment.getTransformationSystem());
-            bottomRight.setRenderable(bomb);
-
-            upperLeft.setLocalPosition(new Vector3(-0.5f, 0, 0.5f));
-            bottomLeft.setLocalPosition(new Vector3(0.5f, 0, 0.5f));
-            upperRight.setLocalPosition(new Vector3(-0.5f, 0, -0.5f));
-            bottomRight.setLocalPosition(new Vector3(0.5f, 0, -0.5f));
-
-            upperLeft.setParent(anchorNode1);
-            upperRight.setParent(anchorNode2);
-            bottomLeft.setParent(anchorNode3);
-            bottomRight.setParent(anchorNode4);
-
             // Make labels
-
-            points = new Node[]{upperLeft, upperRight, bottomLeft, bottomRight};
-            extraAnchors = new AnchorNode[]{anchorNode1, anchorNode2, anchorNode3, anchorNode4};
             boardAnchor = anchorNode;
 
             // Change game state
@@ -290,10 +240,6 @@ public class ARActivity extends AppCompatActivity {
 
     public void onClickDone(View view) {
         if(gameInfo != null && gameInfo.currState == GameInfo.State.AdjustingBoard) {
-            if (points == null || points.length != 4) {
-                Log.e("BattleshipDemo", "Error: points array not defined or not correct length");
-                return;
-            }
             if (boardAnchor == null) {
                 Log.e("BattleshipDemo", "Error: board anchor not setup!");
                 return;
@@ -304,17 +250,18 @@ public class ARActivity extends AppCompatActivity {
 
             instructions.setText("");
 
-            new GameBoardModel(Vector3.subtract(points[0].getWorldPosition(), boardAnchor.getWorldPosition()),
-                    Vector3.subtract(points[1].getWorldPosition(), boardAnchor.getWorldPosition()),
-                    Vector3.subtract(points[2].getWorldPosition(), boardAnchor.getWorldPosition()),
-                    Vector3.subtract(points[3].getWorldPosition(), boardAnchor.getWorldPosition()),
-                    boardAnchor,
-                    this);
-            for (AnchorNode bye : extraAnchors){
-                bye.setParent(null);
-                bye.getAnchor().detach();
-            }
+            Node newNode = new Node();
+            newNode.setRenderable(frame);
+            newNode.setLocalRotation(boardNode.getLocalRotation());
+            newNode.setLocalPosition(boardNode.getLocalPosition());
+            newNode.setLocalScale(boardNode.getLocalScale());
+            newNode.setParent(boardAnchor);
+
+            boardNode.setParent(null);
+            boardNode = newNode;
+
             arFragment.getArSceneView().getPlaneRenderer().setEnabled(false);
+            gameInfo.currState = GameInfo.State.Player1Choosing;
         }
     }
 }
