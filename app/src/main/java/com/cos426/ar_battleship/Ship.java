@@ -10,9 +10,10 @@ public class Ship {
     int startX;
     int startY;
     boolean xAxis;
+    private final int BOARD_SIZE = GameInfo.BOARD_SIZE;
 
     public Ship(int size, int x, int y, boolean xAxis) {
-        locations = new boolean[9][9];
+        locations = new boolean[BOARD_SIZE][BOARD_SIZE];
         livingParts = new boolean[size];
         startX = x;
         startY = y;
@@ -22,10 +23,19 @@ public class Ship {
         }
         partsAlive = size;
         isAlive = true;
-    }
+        if(xAxis){
+            for(int i = 0; i<size; i++){
+                locations[i][y] = true;
+            }
+        }else{
+                for(int i = 0; i<size; i++){
+                    locations[x][i] = true;
+                }
+            }
+        }
     public boolean shoot(int x, int y){
-        if(x >= 9 || x < 0) return false;
-        if(y >= 9 || y < 0 ) return false;
+        if(x >= BOARD_SIZE || x < 0) return false;
+        if(y >= BOARD_SIZE || y < 0 ) return false;
         if(locations[x][y]){
             locations[x][y] = false;
             partsAlive--;
