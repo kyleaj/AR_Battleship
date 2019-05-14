@@ -145,7 +145,7 @@ public class ARActivity extends AppCompatActivity {
                     for (int x = 0; x < 7; x++) {
                         for (int y = 0; y < y; y++) {
                             // TODO: Fill this in with if it actually contains a ship or not
-                            positions[x][y] = new SphereNode(true);
+                            positions[x][y] = new SphereNode(true, arFragment);
                             Renderable sphere = ShapeFactory.makeSphere(width * 0.7f / 7f, new Vector3(0, 0, 0), material.makeCopy());
                             positions[x][y].setRenderable(sphere);
                             positions[x][y].setLocalPosition(new Vector3((dw * x) + startX, 0,(dy *y) + startY));
