@@ -128,12 +128,12 @@ public class ARActivity extends AppCompatActivity {
         float height = boardNode.getLocalScale().z;
 
         // 7 x 7 board
-        float dw = width / (2 * 7);
-        float dy = height / (2 * 7);
+        float dw = width / (2 * GameInfo.BOARD_SIZE);
+        float dy = height / (2 * GameInfo.BOARD_SIZE);
         float startX = -width/2;
         float startY = -height/2;
 
-        Node[][] positions = new Node[7][7];
+        SphereNode[][] positions = new SphereNode[GameInfo.BOARD_SIZE][GameInfo.BOARD_SIZE];
 
         MaterialFactory.makeOpaqueWithColor(this, new Color(0, 0, 0)).handle(
                 ((material, throwable) -> {
