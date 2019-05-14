@@ -1,0 +1,21 @@
+material {
+    name : "Custom material",
+    name : "Textured material",
+    parameters : [
+    {
+         type : float,
+         name : notused
+    }
+         ],
+    shadingModel : unlit,
+    colorWrite : true,
+    culling : none,
+    depthWrite : true
+}
+
+fragment {
+    void material(inout MaterialInputs material) {
+        prepareMaterial(material);
+        material.baseColor = vec4(0.0);
+    }
+}
