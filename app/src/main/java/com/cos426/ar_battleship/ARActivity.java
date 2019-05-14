@@ -135,7 +135,7 @@ public class ARActivity extends AppCompatActivity {
 
         Node[][] positions = new Node[7][7];
 
-        MaterialFactory.makeOpaqueWithColor(this, new Color(255, 255, 255)).handle(
+        MaterialFactory.makeOpaqueWithColor(this, new Color(0, 0, 0)).handle(
                 ((material, throwable) -> {
 
                     if (throwable != null) {
@@ -144,7 +144,8 @@ public class ARActivity extends AppCompatActivity {
 
                     for (int x = 0; x < 7; x++) {
                         for (int y = 0; y < y; y++) {
-                            positions[x][y] = new Node();
+                            // TODO: Fill this in with if it actually contains a ship or not
+                            positions[x][y] = new SphereNode(true);
                             Renderable sphere = ShapeFactory.makeSphere(width * 0.7f / 7f, new Vector3(0, 0, 0), material.makeCopy());
                             positions[x][y].setRenderable(sphere);
                             positions[x][y].setLocalPosition(new Vector3((dw * x) + startX, 0,(dy *y) + startY));
