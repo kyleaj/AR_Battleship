@@ -45,9 +45,6 @@ sceneform.asset('sampledata/old_boat.obj',
         'src/main/assets/old_boat')
 
 
-
-
-
 sceneform.asset('sampledata/CUPIC_OCEAN.obj',
         'default',
         'sampledata/CUPIC_OCEAN.sfa',

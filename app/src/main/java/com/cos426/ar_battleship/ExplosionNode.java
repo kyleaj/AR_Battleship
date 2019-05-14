@@ -59,6 +59,7 @@ public class ExplosionNode extends Node {
             counter = counter + frameTime.getDeltaSeconds();
             if (counter > 0.7f) {
                 done = true;
+                this.setParent(null);
             }
         }
 

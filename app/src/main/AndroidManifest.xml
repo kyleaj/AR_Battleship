@@ -7,6 +7,7 @@
     <uses-feature android:name="android.hardware.camera.ar" />
 
     <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -14,15 +15,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.cos426.ar_battleship.MainActivity">
+        <activity android:name=".ConfirmFire"></activity>
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.cos426.ar_battleship.ARActivity"></activity>
-        <activity android:name="com.cos426.ar_battleship.PlacementActivity"></activity>
+        <activity android:name=".ARActivity" />
+        <activity android:name=".PlacementActivity" />
 
         <meta-data
             android:name="com.google.ar.core"

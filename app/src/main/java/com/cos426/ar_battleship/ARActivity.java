@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,6 +42,8 @@ import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.google.ar.schemas.sceneform.MaterialDef;
 
+import java.util.Observable;
+import java.util.Observer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -52,6 +55,8 @@ public class ARActivity extends AppCompatActivity {
 
     // Gmae layout setup renderables
     private ModelRenderable frame;
+    private ViewRenderable confirmFire;
+    private FireNode confirmFireNode;
 
     // Setting up the playboard views
     private ImageView reticle;
@@ -63,6 +68,9 @@ public class ARActivity extends AppCompatActivity {
     private Node boardNode;
 
     public GameInfo gameInfo;
+
+    // Keep track of interactions
+    public SphereNode lastTouched; // The last node touched
 
 
     @Override
@@ -80,9 +88,20 @@ public class ARActivity extends AppCompatActivity {
         gameInfo.currState = GameInfo.State.SetPlayArea;
 
         CompletableFuture<ModelRenderable> frameBuilder = ModelRenderable.builder().setSource(this, R.raw.pic_frame).build();
+//        LinearLayout fire_it = new LinearLayout(this);
+//        Button fireButton = new Button(this);
+//        fireButton.setText("Fire?");
+//        fireButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                takeAShot();
+//            }
+//        });
+
+        CompletableFuture<ViewRenderable> fireBuilder = ViewRenderable.builder().setView(this, R.layout.confirm_fire).build();
 
         CompletableFuture.allOf(
-                frameBuilder
+                frameBuilder, fireBuilder
         ).handle((result, throwable) -> {
             if(throwable != null) {
                 Log.wtf("BattleshipDemo", "Can't load renderables!");
@@ -91,16 +110,28 @@ public class ARActivity extends AppCompatActivity {
 
             try {
                 frame = frameBuilder.get();
+                confirmFire = fireBuilder.get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
 
+            ((Button)confirmFire.getView().findViewById(R.id.confirm_button)).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    takeAShot();
+                }
+            });
+
             // Now set everything up
-            instructions.setText("Move the device so the reticle points towards the center of the play area, then tap anywhere on the screen.");
+            instructions.setText("Move the device so the reticule points towards the center of the play area, then tap anywhere on the screen.");
             reticle.setVisibility(View.VISIBLE);
             arFragment.setOnTapArPlaneListener(this::setPlayArea);
+
+            confirmFireNode = new FireNode();
+            confirmFireNode.setRenderable(confirmFire);
+
             return null;
         });
     }
@@ -113,23 +144,26 @@ public class ARActivity extends AppCompatActivity {
 
             // Make labels
             boardAnchor = anchorNode;
+            boardNode = new TransformableNode(arFragment.getTransformationSystem());
+            boardNode.setRenderable(frame);
+            boardNode.setParent(boardAnchor);
 
             // Change game state
             gameInfo.currState = GameInfo.State.AdjustingBoard;
             reticle.setVisibility(View.INVISIBLE);
-            instructions.setText("Tap the center bomb to move, scale, and rotate the board. Click \"Done\" when done.");
+            instructions.setText("Pinch and drag to change the size and move the board to a comfortable position.");
             ar_button.setVisibility(View.VISIBLE);
             ar_button.setEnabled(true);
         }
     }
 
     private void setupPlayArea() {
-        float width = boardNode.getLocalScale().x;
-        float height = boardNode.getLocalScale().z;
+        float width = boardNode.getWorldScale().x;
+        float height = boardNode.getWorldScale().z;
 
         // 7 x 7 board
-        float dw = width / (2 * GameInfo.BOARD_SIZE);
-        float dy = height / (2 * GameInfo.BOARD_SIZE);
+        float dw = width / (GameInfo.BOARD_SIZE);
+        float dy = height / (GameInfo.BOARD_SIZE);
         float startX = -width/2;
         float startY = -height/2;
 
@@ -142,14 +176,20 @@ public class ARActivity extends AppCompatActivity {
                         Log.e("BattleshipDemo", "Couldn't make sphere material!");
                     }
 
-                    for (int x = 0; x < 7; x++) {
-                        for (int y = 0; y < y; y++) {
+                    for (int x = 0; x < GameInfo.BOARD_SIZE; x++) {
+                        for (int y = 0; y < GameInfo.BOARD_SIZE; y++) {
                             // TODO: Fill this in with if it actually contains a ship or not
-                            positions[x][y] = new SphereNode(true, arFragment);
-                            Renderable sphere = ShapeFactory.makeSphere(width * 0.7f / 7f, new Vector3(0, 0, 0), material.makeCopy());
+                            positions[x][y] = new SphereNode(true, arFragment, (y * GameInfo.BOARD_SIZE) + x, gameInfo);
+                            Renderable sphere = ShapeFactory.makeSphere(width * 0.7f / 14f, new Vector3(0, 0, 0), material.makeCopy());
                             positions[x][y].setRenderable(sphere);
-                            positions[x][y].setLocalPosition(new Vector3((dw * x) + startX, 0,(dy *y) + startY));
+                            positions[x][y].setLocalPosition(new Vector3((dw * x) + startX + 1, 0,(dy *y) + startY));
                             positions[x][y].setParent(boardNode);
+                            positions[x][y].listenForChanges(new Observer() {
+                                @Override
+                                public void update(Observable o, Object arg) {
+                                    handleArTap((SphereNode.SphereNodeTouchedEvent)o, (Boolean)arg);
+                                }
+                            });
                         }
                     }
 
@@ -158,8 +198,11 @@ public class ARActivity extends AppCompatActivity {
         );
     }
 
-    private void handleArTap() {
-
+    private void handleArTap(SphereNode.SphereNodeTouchedEvent tappedEvent, boolean containsShip) {
+        if (lastTouched!= null && lastTouched != tappedEvent.thisNode)
+            lastTouched.notTouched();
+        lastTouched = tappedEvent.thisNode;
+        confirmFireNode.target = lastTouched;
     }
 
     private void debugState() {
@@ -181,7 +224,12 @@ public class ARActivity extends AppCompatActivity {
         }
     }
 
-    private boolean takeAShot(int x, int y){
+    private boolean takeAShot(){
+        lastTouched.onSelected();
+        confirmFireNode.target = null;
+        int id = lastTouched.id;
+        int x = id % GameInfo.BOARD_SIZE; // I regret not just saving x and y.
+        int y = id / GameInfo.BOARD_SIZE;
         Board board;
         if(gameInfo.amIPlayer1){
             board = gameInfo.player2Board;
@@ -312,7 +360,7 @@ public class ARActivity extends AppCompatActivity {
 
             instructions.setText("");
 
-            Node newNode = new Node();
+            Node newNode = new FrameNode();
             newNode.setRenderable(frame);
             newNode.setLocalRotation(boardNode.getLocalRotation());
             newNode.setLocalPosition(boardNode.getLocalPosition());
@@ -323,6 +371,9 @@ public class ARActivity extends AppCompatActivity {
             boardNode = newNode;
 
             arFragment.getArSceneView().getPlaneRenderer().setEnabled(false);
+
+            setupPlayArea();
+
             gameInfo.currState = GameInfo.State.Player1Choosing;
         }
     }

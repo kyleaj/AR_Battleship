@@ -1,8 +1,9 @@
 package com.cos426.ar_battleship;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 // Holds the game state for a player
-public class Board {
+public class Board implements Serializable {
     boolean[][] shots_fired;
     boolean[][] hits;
     Ship[][] shipLocations;
