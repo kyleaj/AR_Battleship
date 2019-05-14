@@ -118,7 +118,7 @@ public class GameBoardModel {
         Log.d("BattleshipDemo", "Creating material RenderableDefinition");
 
         CompletableFuture<Material> mat = MaterialFactory.makeOpaqueWithColor(context, new Color(android.graphics.Color.GREEN));
-        // CompletableFuture<Material> mat_occlude = Material.builder().setSource(context, R.raw.occlude).build();
+//         CompletableFuture<Material> mat_occlude = Material.builder().setSource(context, R.raw.occlude).build();
         CompletableFuture<ModelRenderable> occluder = ModelRenderable.builder().setSource(context, R.raw.occlude_material).build();
 
         CompletableFuture.allOf(mat, occluder).handle((notUsed, throwable) -> {
