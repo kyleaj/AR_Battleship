@@ -134,6 +134,40 @@ public class ARActivity extends AppCompatActivity {
 
     }
 
+    private void checkEndGame(){
+        if(!((gameInfo.currState == GameInfo.State.Player1Choosing && gameInfo.amIPlayer1)
+        ||(gameInfo.currState == GameInfo.State.Player2Choosing && !gameInfo.amIPlayer1))) return;
+        if(checkLoseState()){
+            Intent newIntent = new Intent(this, WinActivity.class);
+            startActivity(newIntent);
+            return;
+        }
+        if(checkWinState()){
+            Intent newIntent = new Intent(this, LossActivity.class);
+            startActivity(newIntent);
+            return;
+        }
+    }
+
+    private boolean takeAShot(int x, int y){
+        Board board;
+        if(gameInfo.amIPlayer1){
+            board = gameInfo.player2Board;
+        }else{
+            board = gameInfo.player1Board;
+        }
+        return board.shoot(x,y);
+    }
+    private boolean checkWinState(){
+        if(gameInfo.amIPlayer1){
+            return (gameInfo.player2Board.livingShips == 0);
+        }else{
+            return (gameInfo.player1Board.livingShips == 0);
+        }
+    }
+    private boolean checkLoseState(){
+        return (gameInfo.playerBoard.livingShips == 0);
+    }
     private View makeLabel(String text) {
         FrameLayout layout = new FrameLayout(this);
         FrameLayout.LayoutParams layoutparams=new FrameLayout.LayoutParams(

@@ -98,7 +98,7 @@ public class PlacementActivity extends Activity implements OnClickListener {
                 }
 
 
-                Intent i = new Intent(getApplicationContext(), Login.class);
+                Intent i = new Intent(getApplicationContext(), ARActivity.class);
                 startActivity(i);
             }
         });

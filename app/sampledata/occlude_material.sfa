@@ -1,0 +1,25 @@
+{
+  materials: [
+    {
+      name: 'Material',
+      parameters: [
+        {
+          notused: 0,
+        },
+      ],
+      source: 'sampledata/occlude.mat',
+    },
+  ],
+  model: {
+    attributes: [
+      'Position',
+      'Orientation',
+    ],
+    collision: {},
+    file: 'sampledata/occlude_material.obj',
+    name: 'occlude_material',
+    recenter: 'root',
+    scale: 0.5,
+  },
+  version: '0.54:2',
+}

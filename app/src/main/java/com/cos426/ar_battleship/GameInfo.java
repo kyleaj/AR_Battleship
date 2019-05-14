@@ -15,6 +15,8 @@ public class GameInfo implements Serializable {
     public int player2Score;
     public State currState;
     public Board playerBoard;
+    public Board player1Board;
+    public Board player2Board;
 
     public boolean readyToStart; // Set to true once second player joined in 2 player game
 
