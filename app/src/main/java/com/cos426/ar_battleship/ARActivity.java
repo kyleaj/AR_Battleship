@@ -4,7 +4,13 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+
+import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.sceneform.rendering.Color;
+
+import android.graphics.Bitmap;
+import android.media.Image;
+import android.opengl.Matrix;
 import android.os.Build;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -42,13 +48,32 @@ import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.google.ar.schemas.sceneform.MaterialDef;
 
+
+import org.bytedeco.opencv.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_core.Point;
+import org.bytedeco.opencv.
+import org.ejml.simple.SimpleMatrix;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.nativeblas.Nd4jCpu;
+
+import java.nio.FloatBuffer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import static org.bytedeco.javacpp.opencv_calib3d.CV_RANSAC;
+import static org.opencv.calib3d.Calib3d.*;
+
 
 public class ARActivity extends AppCompatActivity {
+
+    static {
+        System.loadLibrary("opencv_java");
+    }
 
     private ArFragment arFragment;
     private static final double MIN_OPENGL_VERSION = 3.0;
@@ -132,6 +157,72 @@ public class ARActivity extends AppCompatActivity {
             Anchor anchor = plane.createAnchor(hitResult.getHitPose());
             AnchorNode anchorNode = new AnchorNode(anchor);
             anchorNode.setParent(arFragment.getArSceneView().getScene());
+
+            // Get world space coordiantes
+            Vector3 upperLeft = Vector3.add(anchorNode.getWorldPosition(),
+                    Vector3.add(anchorNode.getForward(),
+                            anchorNode.getLeft()).scaled(0.25f/((float)Math.sqrt(2))));
+            Vector3 upperRight = Vector3.add(anchorNode.getWorldPosition(),
+                    Vector3.add(anchorNode.getForward(),
+                            anchorNode.getRight()).scaled(0.25f/((float)Math.sqrt(2))));
+            Vector3 lowerLeft = Vector3.add(anchorNode.getWorldPosition(),
+                    Vector3.add(anchorNode.getBack(),
+                            anchorNode.getLeft()).scaled(0.25f/((float)Math.sqrt(2))));
+            Vector3 lowerRight = Vector3.add(anchorNode.getWorldPosition(),
+                    Vector3.add(anchorNode.getBack(),
+                            anchorNode.getRight()).scaled(0.25f/((float)Math.sqrt(2))));
+
+            Vector3[] positions = new Vector3[]{anchorNode.getWorldPosition(), upperLeft, upperRight, lowerLeft, lowerRight};
+
+            try {
+                Image image = arFragment.getArSceneView().getArFrame().acquireCameraImage();
+                float[] projectionMatrix = new float[16];
+                float[] viewMatrix = new float[16];
+                arFragment.getArSceneView().getArFrame().getCamera().getProjectionMatrix(projectionMatrix, 0, 0.01F, 100);
+                arFragment.getArSceneView().getArFrame().getCamera().getViewMatrix(viewMatrix, 0);
+
+                float [] viewMat = new float[16];
+                Matrix.multiplyMM(viewMat, 0, projectionMatrix, 0, viewMatrix, 0);
+
+                for (int i = 0; i < positions.length; i++) {
+                    Vector3 worldCoor = positions[i];
+                    float[] homogenousCoor = new float[]{worldCoor.x, worldCoor.y, worldCoor.z, 1};
+                    float[] projectedVerts = new float[4];
+                    Matrix.multiplyMV(projectedVerts, 0, viewMat, 0, homogenousCoor, 0);
+                    positions[i].x= (image.getWidth() * projectedVerts[0] / projectedVerts[3]) / 2f + (image.getWidth() / 2f);
+                    positions[i].y = (image.getHeight() * projectedVerts[0] / projectedVerts[3])/ 2f + (image.getHeight() / 2f);
+                    positions[i].z = 0;
+                    Log.d("BattleshipDemo", "World to screen: " + positions[i].toString());
+                }
+
+                SimpleMatrix h = calculateHomography(positions);
+                h = h.invert();
+
+                Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+
+                SimpleMatrix source = new SimpleMatrix(3, 1);
+                for (int x = 0; x < 100; x++) {
+                    for (int y = 0; y  < 100; y++) {
+                        source.set(0, 0, x);
+                        source.set(1, 0, y);
+                        source.set(2, 0, 1);
+                        SimpleMatrix result = h.mult(source);
+                        int x_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
+                        int y_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
+
+                        bitmap.setPixel(x, y, );
+                    }
+                }
+
+
+
+            } catch (NotYetAvailableException e) {
+                e.printStackTrace();
+                anchorNode.setParent(null);
+                anchor.detach();
+                return;
+            }
+
 
             // Make labels
             boardAnchor = anchorNode;
@@ -373,5 +464,38 @@ public class ARActivity extends AppCompatActivity {
 
             gameInfo.currState = GameInfo.State.Player1Choosing;
         }
+    }
+
+
+    private SimpleMatrix calculateHomography(Vector3[] points) {
+        // Let's get a 100 by 100 photo of this
+        //Vector3[] targetPoints = new Vector3[]{new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(0, 100, 0), new Vector3(100, 100, 0),}
+        Vector3[] targetPoints = new Vector3[]{new Vector3(0, 0, 0),
+                new Vector3(0, 100, 0), new Vector3(100, 0, 0),
+                new Vector3(100, 100, 0)};
+        SimpleMatrix matrix = new SimpleMatrix(9, 9);
+        for (int i = 0; i < points.length; i = i + 2) {
+            matrix.set(i/2, 0, -points[i].x);
+            matrix.set(i/2, 1, -points[i].y);
+            matrix.set(i/2, 2, -1);
+            matrix.set(i/2, 6, points[i].x * targetPoints[i].x);
+            matrix.set(i/2, 7, points[i].y * targetPoints[i].x);
+            matrix.set(i/2, 8, targetPoints[i].x);
+            matrix.set(i/2, 3, -points[i].x);
+            matrix.set(i/2, 4, -points[i].y);
+            matrix.set(i/2, 5, -1);
+            matrix.set(i/2, 6, points[i].x * targetPoints[i].y);
+            matrix.set(i/2, 7, points[i].y * targetPoints[i].y);
+            matrix.set(i/2, 8,  targetPoints[i].y);
+        }
+        matrix.set(8, 8,  1);
+
+        SimpleMatrix b = new SimpleMatrix(9, 1);
+        b.set(9, 0, 1);
+
+        SimpleMatrix h = matrix.solve(b);
+
+        h.reshape(3, 3);
+        return h;
     }
 }

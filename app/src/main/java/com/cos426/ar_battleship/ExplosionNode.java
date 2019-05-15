@@ -1,6 +1,7 @@
 package com.cos426.ar_battleship;
 
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -22,7 +23,7 @@ public class ExplosionNode extends Node {
     Renderable thisRenderable;
     boolean done;
 
-    float velocty = 1.01f; // 1.1 meters a second to expand?
+    float velocty = 0.1f; // 1.1 meters a second to expand?
     float counter = 0.0f;
 
     public ExplosionNode(ArFragment fragment) {
@@ -33,7 +34,7 @@ public class ExplosionNode extends Node {
             MaterialFactory.makeTransparentWithTexture(fragment.getContext(), texture).handle((mat, throwable1) -> {
                 this.setRenderable(ShapeFactory.makeSphere(0.01f, Vector3.zero(), mat));
                 thisRenderable = this.getRenderable();
-                fragment.getArSceneView().playSoundEffect(R.raw.explosion_sound);
+                MediaPlayer.create(fragment.getContext(), R.raw.explosion_sound).start();
                 Vibrator v = (Vibrator) fragment.getContext().getSystemService(Context.VIBRATOR_SERVICE);
                 // Vibrate for 700 milliseconds
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
