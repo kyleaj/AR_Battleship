@@ -49,13 +49,7 @@ import com.google.ar.sceneform.ux.TransformableNode;
 import com.google.ar.schemas.sceneform.MaterialDef;
 
 
-import org.bytedeco.opencv.opencv_core.Mat;
-import org.bytedeco.opencv.opencv_core.Point;
-import org.bytedeco.opencv.
 import org.ejml.simple.SimpleMatrix;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.nativeblas.Nd4jCpu;
 
 import java.nio.FloatBuffer;
 import java.util.Arrays;
@@ -64,9 +58,6 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
-import static org.bytedeco.javacpp.opencv_calib3d.CV_RANSAC;
-import static org.opencv.calib3d.Calib3d.*;
 
 
 public class ARActivity extends AppCompatActivity {
