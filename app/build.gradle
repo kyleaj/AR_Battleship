@@ -67,3 +67,8 @@ sceneform.asset('sampledata/pic_frame.gltf',
         'default',
         'sampledata/pic_frame.sfa',
         'src/main/res/raw/pic_frame')
+
+sceneform.asset('sampledata/board.obj',
+        'default',
+        'sampledata/board.sfa',
+        'src/main/assets/board')

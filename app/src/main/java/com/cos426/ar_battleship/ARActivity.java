@@ -9,7 +9,9 @@ import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.sceneform.rendering.Color;
 
 import android.graphics.Bitmap;
+import android.graphics.SurfaceTexture;
 import android.media.Image;
+import android.media.MediaPlayer;
 import android.opengl.Matrix;
 import android.os.Build;
 import android.os.Handler;
@@ -37,6 +39,7 @@ import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.HitTestResult;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.math.Vector3;
+import com.google.ar.sceneform.rendering.ExternalTexture;
 import com.google.ar.sceneform.rendering.Material;
 import com.google.ar.sceneform.rendering.MaterialFactory;
 import com.google.ar.sceneform.rendering.ModelRenderable;
@@ -82,9 +85,17 @@ public class ARActivity extends AppCompatActivity {
 
     public GameInfo gameInfo;
 
+    private ModelRenderable videoRenderable;
     // Keep track of interactions
     public SphereNode lastTouched; // The last node touched
+    private MediaPlayer mediaPlayer;
 
+    // The color to filter out of the video.
+    private static final Color CHROMA_KEY_COLOR = new Color(0.1843f, 1.0f, 0.098f);
+
+    // Controls the height of the video in world space.
+    private static final float VIDEO_HEIGHT_METERS = 0.85f;
+    private ExternalTexture texture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,13 +110,33 @@ public class ARActivity extends AppCompatActivity {
         Intent intent = getIntent();
         gameInfo = GameInfo.gameInfo;
         gameInfo.currState = GameInfo.State.SetPlayArea;
-
-        CompletableFuture<ModelRenderable> frameBuilder = ModelRenderable.builder().setSource(this, R.raw.pic_frame).build();
+        texture = new ExternalTexture();
+        mediaPlayer = MediaPlayer.create(this, R.raw.water);
+        mediaPlayer.setSurface(texture.getSurface());
+        mediaPlayer.setLooping(true);
+        ModelRenderable.builder()
+                .setSource(this, R.raw.water)
+                .build()
+                .thenAccept(
+                        renderable -> {
+                            videoRenderable = renderable;
+                            renderable.getMaterial().setExternalTexture("videoTexture", texture);
+                            renderable.getMaterial().setFloat4("keyColor", CHROMA_KEY_COLOR);
+                        })
+                .exceptionally(
+                        throwable -> {
+                            Toast toast =
+                                    Toast.makeText(this, "Unable to load video renderable", Toast.LENGTH_LONG);
+                            toast.setGravity(Gravity.CENTER, 0, 0);
+                            toast.show();
+                            return null;
+                        });
+//        CompletableFuture<ModelRenderable> frameBuilder = ModelRenderable.builder().setSource(this, R.raw.water).build();
 
         CompletableFuture<ViewRenderable> fireBuilder = ViewRenderable.builder().setView(this, R.layout.confirm_fire).build();
 
         CompletableFuture.allOf(
-                frameBuilder, fireBuilder
+                 fireBuilder
         ).handle((result, throwable) -> {
             if(throwable != null) {
                 Log.wtf("BattleshipDemo", "Can't load renderables!");
@@ -113,7 +144,7 @@ public class ARActivity extends AppCompatActivity {
             }
 
             try {
-                frame = frameBuilder.get();
+                frame = videoRenderable;
                 confirmFire = fireBuilder.get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -215,7 +246,23 @@ public class ARActivity extends AppCompatActivity {
             // Make labels
             boardAnchor = anchorNode;
             boardNode = new TransformableNode(arFragment.getTransformationSystem());
-            boardNode.setRenderable(frame);
+//            boardNode.setRenderable(frame);
+            if (!mediaPlayer.isPlaying()) {
+                mediaPlayer.start();
+
+                // Wait to set the renderable until the first frame of the  video becomes available.
+                // This prevents the renderable from briefly appearing as a black quad before the video
+                // plays.
+                texture
+                        .getSurfaceTexture()
+                        .setOnFrameAvailableListener(
+                                (SurfaceTexture surfaceTexture) -> {
+                                    boardNode.setRenderable(frame);
+                                    texture.getSurfaceTexture().setOnFrameAvailableListener(null);
+                                });
+            } else {
+                boardNode.setRenderable(frame);
+            }
             boardNode.setParent(boardAnchor);
             confirmFireNode.setParent(boardAnchor);
 
@@ -269,6 +316,16 @@ public class ARActivity extends AppCompatActivity {
                     return null;
                 })
         );
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
     }
 
     private void handleArTap(SphereNode.SphereNodeTouchedEvent tappedEvent, boolean containsShip) {
