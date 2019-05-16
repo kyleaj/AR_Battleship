@@ -186,24 +186,24 @@ public class ARActivity extends AppCompatActivity {
                     Log.d("BattleshipDemo", "World to screen: " + positions[i].toString());
                 }
 
-                SimpleMatrix h = calculateHomography(positions);
-                h = h.invert();
-
-                Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
-
-                SimpleMatrix source = new SimpleMatrix(3, 1);
-                for (int x = 0; x < 100; x++) {
-                    for (int y = 0; y  < 100; y++) {
-                        source.set(0, 0, x);
-                        source.set(1, 0, y);
-                        source.set(2, 0, 1);
-                        SimpleMatrix result = h.mult(source);
-                        int x_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
-                        int y_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
-
-                        bitmap.setPixel(x, y, );
-                    }
-                }
+//                SimpleMatrix h = calculateHomography(positions);
+//                h = h.invert();
+//
+//                Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+//
+//                SimpleMatrix source = new SimpleMatrix(3, 1);
+//                for (int x = 0; x < 100; x++) {
+//                    for (int y = 0; y  < 100; y++) {
+//                        source.set(0, 0, x);
+//                        source.set(1, 0, y);
+//                        source.set(2, 0, 1);
+//                        SimpleMatrix result = h.mult(source);
+//                        int x_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
+//                        int y_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
+//
+//                        bitmap.setPixel(x, y, );
+//                    }
+//                }
 
 
 
@@ -242,7 +242,9 @@ public class ARActivity extends AppCompatActivity {
         float startY = -height/2;
 
         SphereNode[][] positions = new SphereNode[GameInfo.BOARD_SIZE][GameInfo.BOARD_SIZE];
-
+        Board sphereBoard;
+        if(gameInfo.amIPlayer1) sphereBoard = gameInfo.player2Board;
+        else sphereBoard = gameInfo.player1Board;
         MaterialFactory.makeOpaqueWithColor(this, new Color(0, 0, 0)).handle(
                 ((material, throwable) -> {
 
@@ -253,7 +255,7 @@ public class ARActivity extends AppCompatActivity {
                     for (int x = 0; x < GameInfo.BOARD_SIZE; x++) {
                         for (int y = 0; y < GameInfo.BOARD_SIZE; y++) {
                             // TODO: Fill this in with if it actually contains a ship or not
-                            positions[x][y] = new SphereNode(true, arFragment, (y * GameInfo.BOARD_SIZE) + x, gameInfo);
+                            positions[x][y] = new SphereNode(true, arFragment, (y * GameInfo.BOARD_SIZE) + x, gameInfo,x,y,sphereBoard,this);
                             Renderable sphere = ShapeFactory.makeSphere(width * 0.7f / 14f, new Vector3(0, 0, 0), material.makeCopy());
                             positions[x][y].setRenderable(sphere);
                             positions[x][y].setLocalPosition(new Vector3((dw * x) + startX + 1, 0,(dy *y) + startY));
@@ -287,21 +289,6 @@ public class ARActivity extends AppCompatActivity {
 
     }
 
-    private void checkEndGame(){
-        if(!((gameInfo.currState == GameInfo.State.Player1Choosing && gameInfo.amIPlayer1)
-        ||(gameInfo.currState == GameInfo.State.Player2Choosing && !gameInfo.amIPlayer1))) return;
-        if(checkLoseState()){
-            Intent newIntent = new Intent(this, WinActivity.class);
-            startActivity(newIntent);
-            return;
-        }
-        if(checkWinState()){
-            Intent newIntent = new Intent(this, LossActivity.class);
-            startActivity(newIntent);
-            return;
-        }
-    }
-
     private boolean takeAShot(){
         lastTouched.onSelected();
         confirmFireNode.target = null;
@@ -316,16 +303,6 @@ public class ARActivity extends AppCompatActivity {
         }
         return true;
         //return board.shoot(x,y);
-    }
-    private boolean checkWinState(){
-        if(gameInfo.amIPlayer1){
-            return (gameInfo.player2Board.livingShips == 0);
-        }else{
-            return (gameInfo.player1Board.livingShips == 0);
-        }
-    }
-    private boolean checkLoseState(){
-        return (gameInfo.playerBoard.livingShips == 0);
     }
     private View makeLabel(String text) {
         FrameLayout layout = new FrameLayout(this);
@@ -458,35 +435,35 @@ public class ARActivity extends AppCompatActivity {
     }
 
 
-    private SimpleMatrix calculateHomography(Vector3[] points) {
-        // Let's get a 100 by 100 photo of this
-        //Vector3[] targetPoints = new Vector3[]{new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(0, 100, 0), new Vector3(100, 100, 0),}
-        Vector3[] targetPoints = new Vector3[]{new Vector3(0, 0, 0),
-                new Vector3(0, 100, 0), new Vector3(100, 0, 0),
-                new Vector3(100, 100, 0)};
-        SimpleMatrix matrix = new SimpleMatrix(9, 9);
-        for (int i = 0; i < points.length; i = i + 2) {
-            matrix.set(i/2, 0, -points[i].x);
-            matrix.set(i/2, 1, -points[i].y);
-            matrix.set(i/2, 2, -1);
-            matrix.set(i/2, 6, points[i].x * targetPoints[i].x);
-            matrix.set(i/2, 7, points[i].y * targetPoints[i].x);
-            matrix.set(i/2, 8, targetPoints[i].x);
-            matrix.set(i/2, 3, -points[i].x);
-            matrix.set(i/2, 4, -points[i].y);
-            matrix.set(i/2, 5, -1);
-            matrix.set(i/2, 6, points[i].x * targetPoints[i].y);
-            matrix.set(i/2, 7, points[i].y * targetPoints[i].y);
-            matrix.set(i/2, 8,  targetPoints[i].y);
-        }
-        matrix.set(8, 8,  1);
-
-        SimpleMatrix b = new SimpleMatrix(9, 1);
-        b.set(9, 0, 1);
-
-        SimpleMatrix h = matrix.solve(b);
-
-        h.reshape(3, 3);
-        return h;
-    }
+//    private SimpleMatrix calculateHomography(Vector3[] points) {
+//        // Let's get a 100 by 100 photo of this
+//        //Vector3[] targetPoints = new Vector3[]{new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(0, 100, 0), new Vector3(100, 100, 0),}
+//        Vector3[] targetPoints = new Vector3[]{new Vector3(0, 0, 0),
+//                new Vector3(0, 100, 0), new Vector3(100, 0, 0),
+//                new Vector3(100, 100, 0)};
+//        SimpleMatrix matrix = new SimpleMatrix(9, 9);
+//        for (int i = 0; i < points.length; i = i + 2) {
+//            matrix.set(i/2, 0, -points[i].x);
+//            matrix.set(i/2, 1, -points[i].y);
+//            matrix.set(i/2, 2, -1);
+//            matrix.set(i/2, 6, points[i].x * targetPoints[i].x);
+//            matrix.set(i/2, 7, points[i].y * targetPoints[i].x);
+//            matrix.set(i/2, 8, targetPoints[i].x);
+//            matrix.set(i/2, 3, -points[i].x);
+//            matrix.set(i/2, 4, -points[i].y);
+//            matrix.set(i/2, 5, -1);
+//            matrix.set(i/2, 6, points[i].x * targetPoints[i].y);
+//            matrix.set(i/2, 7, points[i].y * targetPoints[i].y);
+//            matrix.set(i/2, 8,  targetPoints[i].y);
+//        }
+//        matrix.set(8, 8,  1);
+//
+//        SimpleMatrix b = new SimpleMatrix(9, 1);
+//        b.set(9, 0, 1);
+//
+//        SimpleMatrix h = matrix.solve(b);
+//
+//        h.reshape(3, 3);
+//        return h;
+//    }
 }
