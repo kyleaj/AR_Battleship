@@ -15,16 +15,9 @@
         android:textSize="16sp"
         android:textStyle="bold" />
 
-    <Button
-        android:id="@+id/shipConfirmation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:backgroundTint="#00DA9C9C"
-        android:text="Place Ships!!" />
-
     <TableLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="321dp">
 
         <TableRow
             android:layout_width="match_parent"
@@ -299,5 +292,12 @@
         </TableRow>
 
     </TableLayout>
+
+    <Button
+        android:id="@+id/shipConfirmation"
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:backgroundTint="#00DA9C9C"
+        android:text="Place Ships!!" />
 
 </LinearLayout>

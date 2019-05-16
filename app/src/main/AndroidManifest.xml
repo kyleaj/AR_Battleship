@@ -25,6 +25,8 @@
         </activity>
         <activity android:name=".ARActivity" />
         <activity android:name=".PlacementActivity" />
+        <activity android:name=".WinActivity" />
+        <activity android:name=".LossActivity" />
 
         <meta-data
             android:name="com.google.ar.core"

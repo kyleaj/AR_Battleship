@@ -18,38 +18,49 @@ import android.widget.GridView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-public class PlacementActivity {// extends Activity implements OnClickListener {
+public class PlacementActivity extends Activity implements OnClickListener {
    /**
     private ArrayList<ToggleButton> mButtons = new ArrayList<>();
     /** Called when the activity is first created. */
-   /*
+   private GameInfo gameInfo;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.placement_activity);
         Button btn = (Button) findViewById(R.id.shipConfirmation);
         Intent intent = getIntent();
-        GameInfo gameInfo = (GameInfo)intent.getSerializableExtra(getString(R.string.pass_game));
+        gameInfo = GameInfo.gameInfo;
         Board playerBoard = gameInfo.playerBoard;
         gameInfo.currState = GameInfo.State.PlacingShipsP1;
+        EditText x1 = (EditText) findViewById(R.id.carrierX);
+        EditText x2 = (EditText) findViewById(R.id.battleShipX);
+        EditText x3 = (EditText) findViewById(R.id.cruiserX);
+        EditText x4 = (EditText) findViewById(R.id.subX);
+        EditText x5 = (EditText) findViewById(R.id.destroyerX);
+        EditText y1 = (EditText) findViewById(R.id.carrierY);
+        EditText y2 = (EditText) findViewById(R.id.battleShipY);
+        EditText y3 = (EditText) findViewById(R.id.cruiserY);
+        EditText y4 = (EditText) findViewById(R.id.subY);
+        EditText y5 = (EditText) findViewById(R.id.destoryerY);
+        Checkable xAligned1 = (Checkable) findViewById(R.id.xAlignedCarrier);
+        Checkable xAligned2 = (Checkable) findViewById(R.id.xAlignedBattleship);
+        Checkable xAligned3 = (Checkable) findViewById(R.id.xAlignedCruiser);
+        Checkable xAligned4 = (Checkable) findViewById(R.id.xAlignedSub);
+        Checkable xAligned5 = (Checkable) findViewById(R.id.xAlignedDestroyer);
+        x1.setText("0");
+        x2.setText("1");
+        x3.setText("2");
+        x4.setText("3");
+        x5.setText("4");
+        y1.setText("0");
+        y2.setText("1");
+        y3.setText("2");
+        y4.setText("3");
+        y5.setText("4");
 
         btn.setOnClickListener( new View.OnClickListener() {
             public void onClick(View v) {
-                EditText x1 = (EditText) findViewById(R.id.carrierX);
-                EditText x2 = (EditText) findViewById(R.id.battleShipX);
-                EditText x3 = (EditText) findViewById(R.id.cruiserX);
-                EditText x4 = (EditText) findViewById(R.id.subX);
-                EditText x5 = (EditText) findViewById(R.id.destroyerX);
-                EditText y1 = (EditText) findViewById(R.id.carrierY);
-                EditText y2 = (EditText) findViewById(R.id.battleShipY);
-                EditText y3 = (EditText) findViewById(R.id.cruiserY);
-                EditText y4 = (EditText) findViewById(R.id.subY);
-                EditText y5 = (EditText) findViewById(R.id.destoryerY);
-                Checkable xAligned1 = (Checkable) findViewById(R.id.xAlignedCarrier);
-                Checkable xAligned2 = (Checkable) findViewById(R.id.xAlignedBattleship);
-                Checkable xAligned3 = (Checkable) findViewById(R.id.xAlignedCruiser);
-                Checkable xAligned4 = (Checkable) findViewById(R.id.xAlignedSub);
-                Checkable xAligned5 = (Checkable) findViewById(R.id.xAlignedDestroyer);
 
 
                 if(TextUtils.isEmpty(x1.getText())){
@@ -74,55 +85,41 @@ public class PlacementActivity {// extends Activity implements OnClickListener {
                     y5.setError("Y coordinate for Destroyer is required");
                 }else {
                     boolean ret = true;
-                    ret &= playerBoard.addShip(Integer.parseInt(x1.getText().toString())
+                    boolean  temp = true;
+                    temp = playerBoard.addShip(Integer.parseInt(x1.getText().toString())
                             ,Integer.parseInt(y1.getText().toString()),4,
                             xAligned1.isChecked());
-                    ret &= playerBoard.addShip(Integer.parseInt(x2.getText().toString())
+                    temp = ret && temp;
+                    ret = playerBoard.addShip(Integer.parseInt(x2.getText().toString())
                             ,Integer.parseInt(y2.getText().toString()),3,
                             xAligned2.isChecked());
-                    ret &= playerBoard.addShip(Integer.parseInt(x3.getText().toString())
+                    temp = ret && temp;
+                    ret = playerBoard.addShip(Integer.parseInt(x3.getText().toString())
                             ,Integer.parseInt(y3.getText().toString()),2,
                             xAligned3.isChecked());
-                    ret &= playerBoard.addShip(Integer.parseInt(x3.getText().toString())
-                            ,Integer.parseInt(y3.getText().toString()),2,
-                            xAligned3.isChecked());
-                    ret &= playerBoard.addShip(Integer.parseInt(x3.getText().toString())
-                            ,Integer.parseInt(y3.getText().toString()),1,
-                            xAligned3.isChecked());
-                    if(!ret){
+                    temp = ret && temp;
+                    ret = playerBoard.addShip(Integer.parseInt(x4.getText().toString())
+                            ,Integer.parseInt(y4.getText().toString()),2,
+                            xAligned4.isChecked());
+                    temp = ret && temp;
+                    ret = playerBoard.addShip(Integer.parseInt(x5.getText().toString())
+                            ,Integer.parseInt(y5.getText().toString()),1,
+                            xAligned5.isChecked());
+                    temp = ret && temp;
+                    if(!temp){
                         playerBoard.resetBoard();
                         Toast.makeText(getBaseContext()," ship placement was not valid", Toast.LENGTH_SHORT).show();
                     }else{
+                        gameInfo.player2Board.makeDummyBoard();
                         Intent intent = new Intent(getApplicationContext(), ARActivity.class);
-                        intent.putExtra(getString(R.string.pass_game), gameInfo);
                         startActivity(intent);
                     }
                 }
-
-
-                Intent i = new Intent(getApplicationContext(), ARActivity.class);
-                startActivity(i);
             }
         });
     }
     @Override
     public void onClick(View v) {
-        ToggleButton selection = (ToggleButton) v;
-        selection.toggle();
     }
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v,ContextMenuInfo menuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        ToggleButton b = (ToggleButton)v;
-        menu.setHeaderTitle(b.getText());
-        menu.add(0, v.getId(), 0, "Action 1");
-        menu.add(0, v.getId(), 0, "Action 2");
-    }
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        ToggleButton selectedButton = mButtons.get(item.getItemId());
-        Toast.makeText(getBaseContext(),  item.getTitle()+" of "+selectedButton.getText()+ " was pressed!", Toast.LENGTH_SHORT).show();
-        return true;
-    }
-    */
+
 }

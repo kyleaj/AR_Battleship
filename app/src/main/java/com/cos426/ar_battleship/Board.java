@@ -1,5 +1,7 @@
 package com.cos426.ar_battleship;
 
+import android.util.Log;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 // Holds the game state for a player
@@ -37,25 +39,28 @@ public class Board implements Serializable {
     public boolean addShip(int x, int y, int size, boolean xAxis){
         Ship newShip = new Ship(size,x,y,xAxis);
         if(xAxis){
-            for(int i = 0; i<size; i++){
+            if(x < 0 || x + size >= BOARD_SIZE) return false;
+            for(int i = x; i<x+size; i++){
                 if(shipLocations[i][y] != null) return false;
             }
         }else{
-            for(int i = 0; i<size; i++){
+            if(y < 0 || y + size >= BOARD_SIZE) return false;
+            for(int i = y; i<size + y; i++){
                 if(shipLocations[x][i] != null) return false;
             }
         }
 
         if(xAxis){
-            for(int i = 0; i<size; i++){
+            for(int i = x; i<x+size; i++){
                shipLocations[i][y] = newShip;
             }
         }else{
-            for(int i = 0; i<size; i++){
+            for(int i = y; i<y+size; i++){
                 shipLocations[x][i] = newShip;
             }
         }
         livingShips++;
+        Log.d("BattleShipDemo",String.format("living ships is now %d",livingShips));
         ships.add(newShip);
         return true;
     }
@@ -65,5 +70,14 @@ public class Board implements Serializable {
         shipLocations = new Ship[BOARD_SIZE][BOARD_SIZE];
         livingShips = 0;
         ships = new ArrayList<Ship>();
+    }
+    public void makeDummyBoard(){
+        this.resetBoard();
+        this.addShip(4,4,2,true);
+        this.addShip(2,2,3,true);
+    }
+    public boolean checkForShip(int x, int y){
+        if(shipLocations[x][y] == null) return false;
+        return true;
     }
 }

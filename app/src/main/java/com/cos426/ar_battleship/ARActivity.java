@@ -62,9 +62,6 @@ import java.util.concurrent.ExecutionException;
 
 public class ARActivity extends AppCompatActivity {
 
-    static {
-        System.loadLibrary("opencv_java");
-    }
 
     private ArFragment arFragment;
     private static final double MIN_OPENGL_VERSION = 3.0;
@@ -100,7 +97,7 @@ public class ARActivity extends AppCompatActivity {
         ar_button = findViewById(R.id.done_setting_button);
 
         Intent intent = getIntent();
-        gameInfo = (GameInfo)intent.getSerializableExtra(getString(R.string.pass_game));
+        gameInfo = GameInfo.gameInfo;
         gameInfo.currState = GameInfo.State.SetPlayArea;
 
         CompletableFuture<ModelRenderable> frameBuilder = ModelRenderable.builder().setSource(this, R.raw.pic_frame).build();
@@ -164,55 +161,55 @@ public class ARActivity extends AppCompatActivity {
                             anchorNode.getRight()).scaled(0.25f/((float)Math.sqrt(2))));
 
             Vector3[] positions = new Vector3[]{anchorNode.getWorldPosition(), upperLeft, upperRight, lowerLeft, lowerRight};
-
-            try {
-                Image image = arFragment.getArSceneView().getArFrame().acquireCameraImage();
-                float[] projectionMatrix = new float[16];
-                float[] viewMatrix = new float[16];
-                arFragment.getArSceneView().getArFrame().getCamera().getProjectionMatrix(projectionMatrix, 0, 0.01F, 100);
-                arFragment.getArSceneView().getArFrame().getCamera().getViewMatrix(viewMatrix, 0);
-
-                float [] viewMat = new float[16];
-                Matrix.multiplyMM(viewMat, 0, projectionMatrix, 0, viewMatrix, 0);
-
-                for (int i = 0; i < positions.length; i++) {
-                    Vector3 worldCoor = positions[i];
-                    float[] homogenousCoor = new float[]{worldCoor.x, worldCoor.y, worldCoor.z, 1};
-                    float[] projectedVerts = new float[4];
-                    Matrix.multiplyMV(projectedVerts, 0, viewMat, 0, homogenousCoor, 0);
-                    positions[i].x= (image.getWidth() * projectedVerts[0] / projectedVerts[3]) / 2f + (image.getWidth() / 2f);
-                    positions[i].y = (image.getHeight() * projectedVerts[0] / projectedVerts[3])/ 2f + (image.getHeight() / 2f);
-                    positions[i].z = 0;
-                    Log.d("BattleshipDemo", "World to screen: " + positions[i].toString());
-                }
-
-//                SimpleMatrix h = calculateHomography(positions);
-//                h = h.invert();
 //
-//                Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
-//
-//                SimpleMatrix source = new SimpleMatrix(3, 1);
-//                for (int x = 0; x < 100; x++) {
-//                    for (int y = 0; y  < 100; y++) {
-//                        source.set(0, 0, x);
-//                        source.set(1, 0, y);
-//                        source.set(2, 0, 1);
-//                        SimpleMatrix result = h.mult(source);
-//                        int x_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
-//                        int y_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
-//
-//                        bitmap.setPixel(x, y, );
-//                    }
+//            try {
+//                Image image = arFragment.getArSceneView().getArFrame().acquireCameraImage();
+//                float[] projectionMatrix = new float[16];
+//                float[] viewMatrix = new float[16];
+//                arFragment.getArSceneView().getArFrame().getCamera().getProjectionMatrix(projectionMatrix, 0, 0.01F, 100);
+//                arFragment.getArSceneView().getArFrame().getCamera().getViewMatrix(viewMatrix, 0);
+
+//                float [] viewMat = new float[16];
+//                Matrix.multiplyMM(viewMat, 0, projectionMatrix, 0, viewMatrix, 0);
+
+//                for (int i = 0; i < positions.length; i++) {
+//                    Vector3 worldCoor = positions[i];
+//                    float[] homogenousCoor = new float[]{worldCoor.x, worldCoor.y, worldCoor.z, 1};
+//                    float[] projectedVerts = new float[4];
+//                    Matrix.multiplyMV(projectedVerts, 0, viewMat, 0, homogenousCoor, 0);
+//                    positions[i].x= (image.getWidth() * projectedVerts[0] / projectedVerts[3]) / 2f + (image.getWidth() / 2f);
+//                    positions[i].y = (image.getHeight() * projectedVerts[0] / projectedVerts[3])/ 2f + (image.getHeight() / 2f);
+//                    positions[i].z = 0;
+//                    Log.d("BattleshipDemo", "World to screen: " + positions[i].toString());
 //                }
-
-
-
-            } catch (NotYetAvailableException e) {
-                e.printStackTrace();
-                anchorNode.setParent(null);
-                anchor.detach();
-                return;
-            }
+//
+////                SimpleMatrix h = calculateHomography(positions);
+////                h = h.invert();
+////
+////                Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+////
+////                SimpleMatrix source = new SimpleMatrix(3, 1);
+////                for (int x = 0; x < 100; x++) {
+////                    for (int y = 0; y  < 100; y++) {
+////                        source.set(0, 0, x);
+////                        source.set(1, 0, y);
+////                        source.set(2, 0, 1);
+////                        SimpleMatrix result = h.mult(source);
+////                        int x_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
+////                        int y_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
+////
+////                        bitmap.setPixel(x, y, );
+////                    }
+////                }
+//
+//
+//
+//            } catch (NotYetAvailableException e) {
+//                e.printStackTrace();
+//                anchorNode.setParent(null);
+//                anchor.detach();
+//                return;
+//            }
 
 
             // Make labels
@@ -244,7 +241,7 @@ public class ARActivity extends AppCompatActivity {
         SphereNode[][] positions = new SphereNode[GameInfo.BOARD_SIZE][GameInfo.BOARD_SIZE];
         Board sphereBoard;
         if(gameInfo.amIPlayer1) sphereBoard = gameInfo.player2Board;
-        else sphereBoard = gameInfo.player1Board;
+        else sphereBoard = gameInfo.player2Board;
         MaterialFactory.makeOpaqueWithColor(this, new Color(0, 0, 0)).handle(
                 ((material, throwable) -> {
 
@@ -275,12 +272,16 @@ public class ARActivity extends AppCompatActivity {
     }
 
     private void handleArTap(SphereNode.SphereNodeTouchedEvent tappedEvent, boolean containsShip) {
+        Log.d("BattleshipDemo", "State is currently :" + GameInfo.gameInfo.getStateString());
         if (lastTouched == tappedEvent.thisNode) {
-            takeAShot();
+//            takeAShot();
             return;
         }
-        if (lastTouched!= null)
-            lastTouched.notTouched();
+        if (lastTouched!= null) {
+            if (lastTouched.exposed) {
+                lastTouched.notTouched();
+            }
+        }
         lastTouched = tappedEvent.thisNode;
         confirmFireNode.target = lastTouched;
     }
@@ -293,6 +294,9 @@ public class ARActivity extends AppCompatActivity {
         lastTouched.onSelected();
         confirmFireNode.target = null;
         int id = lastTouched.id;
+        gameInfo.incrementRound();
+        gameInfo.haveAIShoot();
+        gameInfo.checkEndGame(this);
         int x = id % GameInfo.BOARD_SIZE; // I regret not just saving x and y.
         int y = id / GameInfo.BOARD_SIZE;
         Board board;
@@ -301,7 +305,7 @@ public class ARActivity extends AppCompatActivity {
         }else{
             board = gameInfo.player1Board;
         }
-        return true;
+        return lastTouched.fire();
         //return board.shoot(x,y);
     }
     private View makeLabel(String text) {

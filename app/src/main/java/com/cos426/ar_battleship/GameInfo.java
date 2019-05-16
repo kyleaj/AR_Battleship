@@ -5,6 +5,7 @@ import android.content.Context;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import java.io.Serializable;
 
@@ -24,6 +25,7 @@ public class GameInfo implements Serializable {
     public Board player1Board;
     public Board player2Board;
     private int round;
+    public static GameInfo gameInfo;
 
     public boolean readyToStart; // Set to true once second player joined in 2 player game
 
@@ -35,6 +37,8 @@ public class GameInfo implements Serializable {
         readyToStart = false;
         currState = State.SetPlayArea;
         playerBoard = new Board();
+        player2Board = new Board();
+        player1Board = this.playerBoard;
     }
 
     // Required by Firebase Realtime Database. Not otherwise to be used(!)
@@ -50,12 +54,14 @@ public class GameInfo implements Serializable {
     }
     public void checkEndGame(Activity activity){
         if(checkLoseState()){
-            Intent newIntent = new Intent(activity, WinActivity.class);
+            Log.d("BattleShipDemo","Game has been lost");
+            Intent newIntent = new Intent(activity, LossActivity.class);
             activity.startActivity(newIntent);
             return;
         }
         if(checkWinState()){
-            Intent newIntent = new Intent(activity, LossActivity.class);
+            Log.d("BattleShipDemo","Game has been won");
+            Intent newIntent = new Intent(activity, WinActivity.class);
             activity.startActivity(newIntent);
             return;
         }
@@ -72,6 +78,18 @@ public class GameInfo implements Serializable {
     }
     public void incrementRound(){round++;}
     public void haveAIShoot(){
+        Log.d("BattleShipDemo",String.format("AI shot %d,%d",round/BOARD_SIZE, round%BOARD_SIZE));
         player1Board.shoot(round/BOARD_SIZE, round%BOARD_SIZE);
+    }
+    public String getStateString(){
+        if(currState == null) return "null";
+        if(currState == State.PlacingShipsP1) return "PlacingShipsP1";
+        if(currState == State.PlacingShipsP2) return "PlacingShipsP2";
+        if(currState == State.Player1Choosing) return "Player1Choosing";
+        if(currState == State.SetPlayArea) return "PlacingShipsP1";
+        if(currState == State.AdjustingBoard) return "PlacingShipsP2";
+        if(currState == State.Player2Choosing)  return "Player2Choosing";
+        if(currState == State.Debug)  return "Debug";
+        return "idk";
     }
 }

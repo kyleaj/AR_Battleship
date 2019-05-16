@@ -26,6 +26,6 @@
             android:id="@+id/lossButt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Play Again?" />
+            android:text="Get Sweet Revenge " />
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

@@ -51,18 +51,17 @@ public class MainActivity extends AppCompatActivity {
 
     public void onClickStartGame(View view) {
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+        GameInfo.gameInfo = new GameInfo(GameInfo.GenerateGamePin(),1);
+        info = GameInfo.gameInfo;
         dialog.setTitle("Select Number of Players: ")
                 .setItems(new String[]{"1 Player", "2 Players"}, (dialog1, which) -> {
                     switch (which) {
                         case 0: // One player
-                            Intent intent = new Intent(this, ARActivity.class);
-                            info = new GameInfo(GameInfo.GenerateGamePin(), 1);
+                            Intent intent = new Intent(this, PlacementActivity.class);
                             info.amIPlayer1 = true;
-                            intent.putExtra(getString(R.string.pass_game), info);
                             startActivity(intent);
                             break;
                         case 1:
-                            info = new GameInfo(GameInfo.GenerateGamePin(), 1);
                             info.amIPlayer1 = true;
                             ProgressDialog.show(this, "Game Pin: " + info.Gamepin,
                                     "Waiting for 2nd player to join...", true, true,

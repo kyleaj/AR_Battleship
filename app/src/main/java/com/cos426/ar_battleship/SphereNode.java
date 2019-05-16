@@ -20,7 +20,7 @@ public class SphereNode extends Node {
     private final ArrayList<Observer> listeners;
 
     private boolean containsShip; // Is this node a part of a ship on the board?
-    private boolean exposed; // Do we already know the status of this node?
+    public boolean exposed; // Do we already know the status of this node?
     private ArFragment thisFragment;
     public final int id;
     private final GameInfo gameInfo;
@@ -40,6 +40,7 @@ public class SphereNode extends Node {
         this.y = y;
         this.board = board;
         this.activity = activity;
+        this.containsShip = board.checkForShip(x,y);
     }
 
     // Subscribe to events: was this node tapped? etc.
@@ -51,11 +52,7 @@ public class SphereNode extends Node {
     public boolean onTouchEvent(HitTestResult hitTestResult, MotionEvent motionEvent) {
         // && ((gameInfo.currState==GameInfo.State.Player2Choosing && gameInfo.amIPlayer1)
         //                        || (gameInfo.currState==GameInfo.State.Player1Choosing && !gameInfo.amIPlayer1)))
-        Log.d("BattleshipDemo", "Node Tapped");
-        this.exposed = true;
-        if(this.board.shoot(this.x,this.y)){
-            containsShip = true;
-        }
+        Log.d("BattleshipDemo", String.format("Node Tapped @ %d,%d in state %s",x,y,GameInfo.gameInfo.getStateString()));
         gameInfo.checkEndGame(activity);
         if (!exposed) {
             this.getRenderable().getMaterial().setFloat3(MaterialFactory.MATERIAL_COLOR, new Color(android.graphics.Color.YELLOW));
@@ -66,9 +63,6 @@ public class SphereNode extends Node {
                 listener.update(event, containsShip);
             }
         }
-        gameInfo.incrementRound();
-        gameInfo.haveAIShoot();
-        gameInfo.checkEndGame(activity);
         return super.onTouchEvent(hitTestResult, motionEvent);
     }
 
@@ -90,5 +84,9 @@ public class SphereNode extends Node {
     public class SphereNodeTouchedEvent extends Observable {
         public SphereNode thisNode;
         public int thisId;
+    }
+
+    public boolean fire(){
+        return this.board.shoot(this.x,this.y);
     }
 }

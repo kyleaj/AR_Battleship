@@ -1,4 +1,7 @@
 package com.cos426.ar_battleship;
+
+import android.util.Log;
+
 // Basically a ship on someone's board
 public class Ship {
 
@@ -24,16 +27,17 @@ public class Ship {
         partsAlive = size;
         isAlive = true;
         if(xAxis){
-            for(int i = 0; i<size; i++){
+            for(int i = startX; i<size+startX; i++){
                 locations[i][y] = true;
             }
         }else{
-                for(int i = 0; i<size; i++){
+                for(int i = startY; i<size+startY; i++){
                     locations[x][i] = true;
                 }
             }
         }
     public boolean shoot(int x, int y){
+        Log.d("BattleShipDemo",String.format("Shot at %d,%d",x,y));
         if(x >= BOARD_SIZE || x < 0) return false;
         if(y >= BOARD_SIZE || y < 0 ) return false;
         if(locations[x][y]){
