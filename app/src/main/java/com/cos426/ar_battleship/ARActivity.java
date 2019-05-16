@@ -1,5 +1,6 @@
 package com.cos426.ar_battleship;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
@@ -9,16 +10,22 @@ import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.sceneform.rendering.Color;
 
 import android.graphics.Bitmap;
+import android.graphics.Picture;
 import android.media.Image;
+import android.net.Uri;
 import android.opengl.Matrix;
 import android.os.Build;
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.support.design.widget.Snackbar;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.PixelCopy;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -51,6 +58,10 @@ import com.google.ar.schemas.sceneform.MaterialDef;
 
 import org.ejml.simple.SimpleMatrix;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -61,10 +72,6 @@ import java.util.concurrent.ExecutionException;
 
 
 public class ARActivity extends AppCompatActivity {
-
-    static {
-        System.loadLibrary("opencv_java");
-    }
 
     private ArFragment arFragment;
     private static final double MIN_OPENGL_VERSION = 3.0;
@@ -163,47 +170,83 @@ public class ARActivity extends AppCompatActivity {
                     Vector3.add(anchorNode.getBack(),
                             anchorNode.getRight()).scaled(0.25f/((float)Math.sqrt(2))));
 
-            Vector3[] positions = new Vector3[]{anchorNode.getWorldPosition(), upperLeft, upperRight, lowerLeft, lowerRight};
+            Vector3[] positions = new Vector3[]{upperLeft, upperRight, lowerLeft, lowerRight};
 
             try {
                 Image image = arFragment.getArSceneView().getArFrame().acquireCameraImage();
-                float[] projectionMatrix = new float[16];
-                float[] viewMatrix = new float[16];
-                arFragment.getArSceneView().getArFrame().getCamera().getProjectionMatrix(projectionMatrix, 0, 0.01F, 100);
-                arFragment.getArSceneView().getArFrame().getCamera().getViewMatrix(viewMatrix, 0);
+                final Bitmap bitmap = Bitmap.createBitmap(arFragment.getArSceneView().getWidth(), arFragment.getArSceneView().getHeight(),
+                        Bitmap.Config.ARGB_8888);
+                final HandlerThread handlerThread = new HandlerThread("PixelCopier");
+                handlerThread.start();
+                PixelCopy.request(arFragment.getArSceneView(), bitmap, (copyResult) -> {
+                    if (copyResult == PixelCopy.SUCCESS) {
+                        float[] projectionMatrix = new float[16];
+                        float[] viewMatrix = new float[16];
+                        arFragment.getArSceneView().getArFrame().getCamera().getProjectionMatrix(projectionMatrix, 0, 0.01F, 100);
+                        arFragment.getArSceneView().getArFrame().getCamera().getViewMatrix(viewMatrix, 0);
 
-                float [] viewMat = new float[16];
-                Matrix.multiplyMM(viewMat, 0, projectionMatrix, 0, viewMatrix, 0);
+                        float [] viewMat = new float[16];
+                        Matrix.multiplyMM(viewMat, 0, projectionMatrix, 0, viewMatrix, 0);
 
-                for (int i = 0; i < positions.length; i++) {
-                    Vector3 worldCoor = positions[i];
-                    float[] homogenousCoor = new float[]{worldCoor.x, worldCoor.y, worldCoor.z, 1};
-                    float[] projectedVerts = new float[4];
-                    Matrix.multiplyMV(projectedVerts, 0, viewMat, 0, homogenousCoor, 0);
-                    positions[i].x= (image.getWidth() * projectedVerts[0] / projectedVerts[3]) / 2f + (image.getWidth() / 2f);
-                    positions[i].y = (image.getHeight() * projectedVerts[0] / projectedVerts[3])/ 2f + (image.getHeight() / 2f);
-                    positions[i].z = 0;
-                    Log.d("BattleshipDemo", "World to screen: " + positions[i].toString());
-                }
+                        for (int i = 0; i < positions.length; i++) {
+                            Vector3 worldCoor = positions[i];
+                            float[] homogenousCoor = new float[]{worldCoor.x, worldCoor.y, worldCoor.z, 1};
+                            float[] projectedVerts = new float[4];
+                            Matrix.multiplyMV(projectedVerts, 0, viewMat, 0, homogenousCoor, 0);
+                            positions[i].x= (image.getWidth() * projectedVerts[0] / projectedVerts[3]) / 2f + (image.getWidth() / 2f);
+                            positions[i].y = (image.getHeight() * projectedVerts[0] / projectedVerts[3])/ 2f + (image.getHeight() / 2f);
+                            positions[i].z = 0;
+                            Log.d("BattleshipDemo", "World to screen: " + positions[i].toString());
+                        }
 
-//                SimpleMatrix h = calculateHomography(positions);
-//                h = h.invert();
-//
-//                Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
-//
-//                SimpleMatrix source = new SimpleMatrix(3, 1);
-//                for (int x = 0; x < 100; x++) {
-//                    for (int y = 0; y  < 100; y++) {
-//                        source.set(0, 0, x);
-//                        source.set(1, 0, y);
-//                        source.set(2, 0, 1);
-//                        SimpleMatrix result = h.mult(source);
-//                        int x_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
-//                        int y_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
-//
-//                        bitmap.setPixel(x, y, );
-//                    }
-//                }
+                        SimpleMatrix h = calculateHomography(positions);
+                        Log.d("Homography", h.toString());
+                        h = h.invert();
+                        Log.d("Homography", h.toString());
+                        Bitmap newBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+
+                        SimpleMatrix source = new SimpleMatrix(3, 1);
+                        for (int x = 0; x < 100; x++) {
+                            for (int y = 0; y  < 100; y++) {
+                                source.set(0, 0, x);
+                                source.set(1, 0, y);
+                                source.set(2, 0, 1);
+                                SimpleMatrix result = h.mult(source);
+                                int x_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
+                                int y_r = (int)Math.round(result.get(0, 0) / result.get(2, 0));
+                                newBitmap.setPixel(x, y, bitmap.getPixel(x_r, y_r));
+                            }
+                        }
+                        try {
+                            saveBitmapToDisk(newBitmap, "image.png");
+                        } catch (IOException e) {
+                            Toast toast = Toast.makeText(ARActivity.this, e.toString(),
+                                    Toast.LENGTH_LONG);
+                            toast.show();
+                            return;
+                        }
+                        Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
+                                "Photo saved", Snackbar.LENGTH_LONG);
+                        snackbar.setAction("Open in Photos", v -> {
+                            File photoFile = new File("image.png");
+
+                            Uri photoURI = FileProvider.getUriForFile(ARActivity.this,
+                                    ARActivity.this.getPackageName() + ".ar.codelab.name.provider",
+                                    photoFile);
+                            Intent intent = new Intent(Intent.ACTION_VIEW, photoURI);
+                            intent.setDataAndType(photoURI, "image/*");
+                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            startActivity(intent);
+
+                        });
+                        snackbar.show();
+                    } else {
+                        Toast toast = Toast.makeText(ARActivity.this,
+                                "Failed to copyPixels: " + copyResult, Toast.LENGTH_LONG);
+                        toast.show();
+                    }
+                    handlerThread.quitSafely();
+                }, new Handler(handlerThread.getLooper()));
 
 
 
@@ -435,35 +478,54 @@ public class ARActivity extends AppCompatActivity {
     }
 
 
-//    private SimpleMatrix calculateHomography(Vector3[] points) {
-//        // Let's get a 100 by 100 photo of this
-//        //Vector3[] targetPoints = new Vector3[]{new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(0, 100, 0), new Vector3(100, 100, 0),}
-//        Vector3[] targetPoints = new Vector3[]{new Vector3(0, 0, 0),
-//                new Vector3(0, 100, 0), new Vector3(100, 0, 0),
-//                new Vector3(100, 100, 0)};
-//        SimpleMatrix matrix = new SimpleMatrix(9, 9);
-//        for (int i = 0; i < points.length; i = i + 2) {
-//            matrix.set(i/2, 0, -points[i].x);
-//            matrix.set(i/2, 1, -points[i].y);
-//            matrix.set(i/2, 2, -1);
-//            matrix.set(i/2, 6, points[i].x * targetPoints[i].x);
-//            matrix.set(i/2, 7, points[i].y * targetPoints[i].x);
-//            matrix.set(i/2, 8, targetPoints[i].x);
-//            matrix.set(i/2, 3, -points[i].x);
-//            matrix.set(i/2, 4, -points[i].y);
-//            matrix.set(i/2, 5, -1);
-//            matrix.set(i/2, 6, points[i].x * targetPoints[i].y);
-//            matrix.set(i/2, 7, points[i].y * targetPoints[i].y);
-//            matrix.set(i/2, 8,  targetPoints[i].y);
-//        }
-//        matrix.set(8, 8,  1);
-//
-//        SimpleMatrix b = new SimpleMatrix(9, 1);
-//        b.set(9, 0, 1);
-//
-//        SimpleMatrix h = matrix.solve(b);
-//
-//        h.reshape(3, 3);
-//        return h;
-//    }
+    private SimpleMatrix calculateHomography(Vector3[] points) {
+        // Let's get a 100 by 100 photo of this
+        Vector3[] targetPoints = new Vector3[]{new Vector3(0, 0, 0),
+                new Vector3(0, 100, 0), new Vector3(100, 0, 0),
+                new Vector3(100, 100, 0)};
+        SimpleMatrix matrix = new SimpleMatrix(9, 9);
+        Log.d("Homogrpahy", Arrays.deepToString(targetPoints));
+        Log.d("Homgraphy", Arrays.deepToString(points));
+
+        for (int i = 0; i < points.length; i++) {
+            matrix.set(i*2, 0, -points[i].x);
+            matrix.set(i*2, 1, -points[i].y);
+            matrix.set(i*2, 2, -1);
+            matrix.set(i*2, 6, points[i].x * targetPoints[i].x);
+            matrix.set(i*2, 7, points[i].y * targetPoints[i].x);
+            matrix.set(i*2, 8, targetPoints[i].x);
+            matrix.set(i*2 + 1, 3, -points[i].x);
+            matrix.set(i*2 + 1, 4, -points[i].y);
+            matrix.set(i*2 + 1, 5, -1);
+            matrix.set(i*2 + 1, 6, points[i].x * targetPoints[i].y);
+            matrix.set(i*2 + 1, 7, points[i].y * targetPoints[i].y);
+            matrix.set(i*2 + 1, 8,  targetPoints[i].y);
+        }
+        matrix.set(8, 8,  1);
+
+        SimpleMatrix b = new SimpleMatrix(9, 1);
+        b.set(8, 0, 1);
+        Log.d("Homography", matrix.toString());
+
+        SimpleMatrix h = matrix.solve(b);
+        Log.d("Homography", h.toString());
+        h.reshape(3, 3);
+        return h;
+    }
+    private void saveBitmapToDisk(Bitmap bitmap, String filename) throws IOException {
+
+        File out = new File(filename);
+        if (!out.getParentFile().exists()) {
+            out.getParentFile().mkdirs();
+        }
+        try (FileOutputStream outputStream = new FileOutputStream(filename);
+             ByteArrayOutputStream outputData = new ByteArrayOutputStream()) {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputData);
+            outputData.writeTo(outputStream);
+            outputStream.flush();
+            outputStream.close();
+        } catch (IOException ex) {
+            throw new IOException("Failed to save bitmap to disk", ex);
+        }
+    }
 }
