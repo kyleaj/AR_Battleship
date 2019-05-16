@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.google.ar.core.exceptions.NotYetAvailableException;
+import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.rendering.Color;
 
 import android.graphics.Bitmap;
@@ -115,7 +116,7 @@ public class ARActivity extends AppCompatActivity {
         mediaPlayer.setSurface(texture.getSurface());
         mediaPlayer.setLooping(true);
         ModelRenderable.builder()
-                .setSource(this, R.raw.water)
+                .setSource(this, R.raw.chroma_key_video)
                 .build()
                 .thenAccept(
                         renderable -> {
@@ -246,6 +247,7 @@ public class ARActivity extends AppCompatActivity {
             // Make labels
             boardAnchor = anchorNode;
             boardNode = new TransformableNode(arFragment.getTransformationSystem());
+            boardNode.setLocalRotation(new Quaternion(new Vector3(90,90,0)));
 //            boardNode.setRenderable(frame);
             if (!mediaPlayer.isPlaying()) {
                 mediaPlayer.start();
@@ -277,18 +279,25 @@ public class ARActivity extends AppCompatActivity {
 
     private void setupPlayArea() {
         float width = boardNode.getWorldScale().x;
+        float length = boardNode.getWorldScale().y;
         float height = boardNode.getWorldScale().z;
 
         // 7 x 7 board
         float dw = width / (GameInfo.BOARD_SIZE);
-        float dy = height / (GameInfo.BOARD_SIZE);
-        float startX = -width/2;
-        float startY = -height/2;
+        float dy = length / (GameInfo.BOARD_SIZE);
+        float startX = width/(-2);
+        float startY = 0;
+        float startZ = boardNode.getLocalPosition().z;
+        float elevation = 0.5f;
+
+        Log.d("BattleShipDemo",String.format("dw: %f, dy: %f, startX: %f, startY: %f, startZ: %f, length: %f, widith %f, hieght %f", dw, dy, startX, startY, startZ, length, width,height));
+        Log.d("BattleShipDemo",String.format("Board position x;%f, y:%f, z:%f",boardNode.getLocalPosition().x,boardNode.getLocalPosition().y,boardNode.getLocalPosition().z));
+
 
         SphereNode[][] positions = new SphereNode[GameInfo.BOARD_SIZE][GameInfo.BOARD_SIZE];
         Board sphereBoard;
         if(gameInfo.amIPlayer1) sphereBoard = gameInfo.player2Board;
-        else sphereBoard = gameInfo.player2Board;
+        else sphereBoard = gameInfo.player1Board;
         MaterialFactory.makeOpaqueWithColor(this, new Color(0, 0, 0)).handle(
                 ((material, throwable) -> {
 
@@ -296,13 +305,15 @@ public class ARActivity extends AppCompatActivity {
                         Log.e("BattleshipDemo", "Couldn't make sphere material!");
                     }
 
+
                     for (int x = 0; x < GameInfo.BOARD_SIZE; x++) {
                         for (int y = 0; y < GameInfo.BOARD_SIZE; y++) {
                             // TODO: Fill this in with if it actually contains a ship or not
                             positions[x][y] = new SphereNode(true, arFragment, (y * GameInfo.BOARD_SIZE) + x, gameInfo,x,y,sphereBoard,this);
                             Renderable sphere = ShapeFactory.makeSphere(width * 0.7f / 14f, new Vector3(0, 0, 0), material.makeCopy());
                             positions[x][y].setRenderable(sphere);
-                            positions[x][y].setLocalPosition(new Vector3((dw * x) + startX + 1, 0,(dy *y) + startY));
+                            positions[x][y].setLocalPosition(new Vector3((dw * x) + startX, (dy*y) + startY,
+                                    -1*elevation + startZ));
                             positions[x][y].setParent(boardNode);
                             positions[x][y].listenForChanges(new Observer() {
                                 @Override
